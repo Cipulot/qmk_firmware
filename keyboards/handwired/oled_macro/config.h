@@ -18,13 +18,19 @@
 
 #include "config_common.h"
 
-#define MATRIX_ROW_PINS { A6, A5, A4, A3, A2 }
-#define MATRIX_COL_PINS { B10, B1, B0, B15, A8, B3, B4, B5, B14, B12, B8, B9 }
-#define UNUSED_PINS
+#define VENDOR_ID 0xFEED
+#define PRODUCT_ID 0x002A
+#define DEVICE_VER 0x0001
+#define MANUFACTURER Cipulot
+#define PRODUCT Oled Macro
 
-#ifdef OLED_DRIVER_ENABLE
-  #define OLED_DISPLAY_128X64
-  #define OLED_TIMEOUT 300000
-#endif
+#define MATRIX_ROWS 5
+#define MATRIX_COLS 12
 
-#define OLED_FONT_END 127
+#define DIODE_DIRECTION COL2ROW
+
+#define DEBOUNCE    5
+
+#define MOUSEKEY_INTERVAL 32
+
+#define TAPPING_TERM 300
