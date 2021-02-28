@@ -2,8 +2,9 @@
 
 #ifdef AUDIO_ENABLE
     #define STARTUP_SONG SONG(PREONIC_SOUND)
-    // #define STARTUP_SONG SONG(NO_SOUND)
+    #define GOODBYE_SONG SONG(GOODBYE_SOUND)
 
+    
     #define DEFAULT_LAYER_SONGS { SONG(QWERTY_SOUND) }
 #endif
 
