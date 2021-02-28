@@ -24,11 +24,6 @@ enum preonic_keycodes { QWERTY = SAFE_RANGE, LOWER, RAISE, MYDOOM, ONE };
 const uint16_t PROGMEM test_combo[] = {KC_LGUI, KC_LSFT, COMBO_END};
 combo_t key_combos[COMBO_COUNT] = {COMBO(test_combo, KC_CAPS)};
 
-/*
-float doom[][2] = SONG(DOOM);
-float one[][2]  = SONG(NUMBER_ONE);
-*/
-
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* Qwerty
@@ -148,33 +143,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
-bool     muse_mode      = false;
-uint8_t  last_muse_note = 0;
-uint16_t muse_counter   = 0;
-uint8_t  muse_offset    = 70;
-uint16_t muse_tempo     = 50;
-
-void matrix_scan_user(void) {
-#ifdef AUDIO_ENABLE
-    if (muse_mode) {
-        if (muse_counter == 0) {
-            uint8_t muse_note = muse_offset + SCALE[muse_clock_pulse()];
-            if (muse_note != last_muse_note) {
-                stop_note(compute_freq_for_midi_note(last_muse_note));
-                play_note(compute_freq_for_midi_note(muse_note), 0xF);
-                last_muse_note = muse_note;
-            }
-        }
-        muse_counter = (muse_counter + 1) % muse_tempo;
-    } else {
-        if (muse_counter) {
-            stop_all_notes();
-            muse_counter = 0;
-        }
-    }
-#endif
-}
-
 void encoder_update_user(uint8_t index, bool clockwise) {
     switch (biton32(layer_state)) {
         case _QWERTY:
@@ -198,6 +166,36 @@ void encoder_update_user(uint8_t index, bool clockwise) {
     }
 }
 
+#ifdef AUDIO_ENABLE
+
+bool     muse_mode      = false;
+uint8_t  last_muse_note = 0;
+uint16_t muse_counter   = 0;
+uint8_t  muse_offset    = 70;
+uint16_t muse_tempo     = 50;
+
+float tone_caps_on[][2]    = SONG(CAPS_LOCK_ON_SOUND);
+float tone_caps_off[][2]   = SONG(CAPS_LOCK_OFF_SOUND);
+
+void matrix_scan_user(void) {
+    if (muse_mode) {
+        if (muse_counter == 0) {
+            uint8_t muse_note = muse_offset + SCALE[muse_clock_pulse()];
+            if (muse_note != last_muse_note) {
+                stop_note(compute_freq_for_midi_note(last_muse_note));
+                play_note(compute_freq_for_midi_note(muse_note), 0xF);
+                last_muse_note = muse_note;
+            }
+        }
+        muse_counter = (muse_counter + 1) % muse_tempo;
+    } else {
+        if (muse_counter) {
+            stop_all_notes();
+            muse_counter = 0;
+        }
+    }
+}
+
 void dip_switch_update_user(uint8_t index, bool active) {
     switch (index) {
         case 0:
@@ -215,3 +213,27 @@ void dip_switch_update_user(uint8_t index, bool active) {
             }
     }
 }
+
+void led_set_user(uint8_t usb_led)
+{
+    static uint8_t old_usb_led = 0;
+
+    wait_ms(10);
+    //_delay_ms(10); // gets rid of tick
+
+    if (!is_playing_notes())
+    {
+        if ((usb_led & (1<<USB_LED_CAPS_LOCK)) && !(old_usb_led & (1<<USB_LED_CAPS_LOCK)))
+        {
+                // If CAPS LK LED is turning on...
+                PLAY_SONG(tone_caps_on);
+        }
+        else if (!(usb_led & (1<<USB_LED_CAPS_LOCK)) && (old_usb_led & (1<<USB_LED_CAPS_LOCK)))
+        {
+                // If CAPS LK LED is turning off...
+                PLAY_SONG(tone_caps_off);
+        }
+    }
+    old_usb_led = usb_led;
+}
+#endif
