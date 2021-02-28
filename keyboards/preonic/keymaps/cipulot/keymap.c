@@ -144,43 +144,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
             break;
-/*
-        case MYDOOM:
-            if (record->event.pressed) {
-                set_tempo(250);
-                PLAY_SONG(doom);
-            }
-            return false;
-            break;
-        case ONE:
-            if (record->event.pressed) {
-                set_tempo(192);
-                PLAY_SONG(one);
-            }
-            return false;
-            break;
-*/
     }
     return true;
 };
-
-void dip_switch_update_user(uint8_t index, bool active) {
-    switch (index) {
-        case 0:
-            if (active) {
-                layer_on(_ADJUST);
-            } else {
-                layer_off(_ADJUST);
-            }
-            break;
-        case 1:
-            if (active) {
-                muse_mode = true;
-            } else {
-                muse_mode = false;
-            }
-    }
-}
 
 bool     muse_mode      = false;
 uint8_t  last_muse_note = 0;
@@ -229,5 +195,23 @@ void encoder_update_user(uint8_t index, bool clockwise) {
             break;
         default:
             break;
+    }
+}
+
+void dip_switch_update_user(uint8_t index, bool active) {
+    switch (index) {
+        case 0:
+            if (active) {
+                layer_on(_ADJUST);
+            } else {
+                layer_off(_ADJUST);
+            }
+            break;
+        case 1:
+            if (active) {
+                muse_mode = true;
+            } else {
+                muse_mode = false;
+            }
     }
 }
