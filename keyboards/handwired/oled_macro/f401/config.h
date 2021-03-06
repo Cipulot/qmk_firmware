@@ -18,13 +18,15 @@
 
 #include "config_common.h"
 
-#define MATRIX_ROW_PINS { A6, A5, A4, A3, A2 }
-#define MATRIX_COL_PINS { B10, B1, B0, B15, A8, B3, B4, B5, B14, B12, B8, B9 }
+#define USB_POLLING_INTERVAL_MS 1
+
+#define MATRIX_ROW_PINS { A5, A4, A3, A2 }
+#define MATRIX_COL_PINS { B9, B8, B12, B14, B5, B4, B3, A8, B15, B0, B1, B10 }
 #define UNUSED_PINS
 
 #ifdef OLED_DRIVER_ENABLE
   #define OLED_DISPLAY_128X64
-  #define OLED_TIMEOUT 300000
+  #define OLED_TIMEOUT 60000
 #endif
 
 #define OLED_FONT_END 127
