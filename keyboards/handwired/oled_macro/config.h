@@ -1,4 +1,4 @@
-/* Copyright 2019
+/* Copyright 2021 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #define MANUFACTURER Cipulot
 #define PRODUCT Oled Macro
 
-#define MATRIX_ROWS 5
+#define MATRIX_ROWS 4
 #define MATRIX_COLS 12
 
 #define DIODE_DIRECTION COL2ROW
