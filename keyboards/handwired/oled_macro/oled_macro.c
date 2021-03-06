@@ -1,4 +1,4 @@
-/* Copyright 2020 Daniel Reibl <janos.daniel.reibl@protonmail.com>
+/* Copyright 2021 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
