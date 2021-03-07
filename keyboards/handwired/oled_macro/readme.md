@@ -4,7 +4,7 @@
 
 A compact 40% (12x4) ortholinear keyboard with OLED screen support.
 
-* Keyboard Maintainer: [Cipulot](https://github.com/Cipulot)
+* Keyboard Maintainer: [Cipulot](https://github.com/Cipulot/Oled_macro)
 * Hardware Supported: Blackpill F401
 
 Make example for this keyboard (after setting up your build environment):
