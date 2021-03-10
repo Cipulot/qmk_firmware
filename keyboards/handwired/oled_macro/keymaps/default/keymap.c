@@ -262,19 +262,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case QWERTY:
             if (record->event.pressed) {
                 set_single_persistent_default_layer(_QWERTY);
-                
             }
             return false;
             break;
-            /*
-        case RESET:
-            if (record->event.pressed) {
-                oled_set_cursor(15,7);
-                oled_write_P(PSTR("RESET "), false);
-            }
-            return false;
-            break;
-            */
     }
     return true;
 };
