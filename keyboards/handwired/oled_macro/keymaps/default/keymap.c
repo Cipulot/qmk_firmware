@@ -236,7 +236,7 @@ void oled_task_user(void) {
     oled_set_cursor(15,6);
     oled_write_P(PSTR("Layer:"), false);
     oled_set_cursor(15,7);
-    switch (get_highest_layer(layer_state)) {
+    switch (biton32(layer_state)) {
         case _QWERTY:
             oled_write_P(PSTR("QWERTY"), false);
             break;
