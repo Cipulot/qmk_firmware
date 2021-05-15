@@ -5,13 +5,6 @@
         }
     ],
     "settings": {
-        "terminal.integrated.shell.windows": "C:\\tools\\QMK_MSYS\\usr\\bin\\sh.exe",
-        "terminal.integrated.env.windows": {
-            "MSYSTEM": "MINGW64",
-            "CHERE_INVOKING": "1"
-        },
-        "terminal.integrated.shellArgs.windows": ["--login", "-i"],
-        "terminal.integrated.cursorStyle": "line",
         "files.associations": {
             "*.h": "c",
             "*.c": "c",
