@@ -143,7 +143,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
-void encoder_update_user(uint8_t index, bool clockwise) {
+#ifdef ENCODER_ENABLE
+bool encoder_update_user(uint8_t index, bool clockwise) {
     switch (biton32(layer_state)) {
         case _QWERTY:
             if (clockwise) {
@@ -164,7 +165,9 @@ void encoder_update_user(uint8_t index, bool clockwise) {
         default:
             break;
     }
+    return true;
 }
+#endif
 
 #ifdef AUDIO_ENABLE
 
