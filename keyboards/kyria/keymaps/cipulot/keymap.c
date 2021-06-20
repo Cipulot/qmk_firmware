@@ -40,8 +40,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_QWERTY] = LAYOUT(
       LT(_RAISE, KC_ESC),       KC_Q,   KC_W,   KC_E,   KC_R,   KC_T,                                         KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_BSPC,
       KC_TAB,   KC_A,   KC_S,   KC_D,   KC_F,   KC_G,                                         KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT,
-      KC_LCTRL,                 KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_GRV,   KC_LBRC, KC_RBRC, KC_EQL, KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-              KC_LGUI, KC_LALT, KC_LGUI, LT(KC_LSFT, KC_SPC), LT(_LOWER, KC_ESC), LT(_RAISE, KC_ESC), LT(KC_RSFT, KC_SPC), KC_ENTER,  KC_PSCR, KC_RALT
+      KC_LCTRL,                 KC_Z,   KC_X,   KC_C,   KC_V,   KC_B,   KC_GRV,   KC_LBRC, KC_RBRC, KC_EQL, KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENTER,
+              KC_LGUI, KC_LALT, KC_LGUI, LT(KC_LSFT, KC_SPC), LT(_LOWER, KC_ESC), LT(_RAISE, KC_ESC), LT(KC_RSFT, KC_SPC), KC_RSFT,  KC_PSCR, KC_RALT
     ),
 /*
  * Lower Layer: Symbols
@@ -196,7 +196,7 @@ static void render_status(void) {
 // #define PREP_FRAMES 1 // uncomment if >1
 
 #define TAP_FRAMES 2
-#define TAP_SPEED 60 // above this wpm value typing animation to triggere
+#define TAP_SPEED 50 // above this wpm value typing animation to triggere
 
 #define ANIM_FRAME_DURATION 200 // how long each frame lasts in ms
 // #define SLEEP_TIMER 60000 // should sleep after this period of 0 wpm, needs fixing
