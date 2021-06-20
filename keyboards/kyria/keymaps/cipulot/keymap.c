@@ -325,7 +325,7 @@ void oled_task_user(void) {
         oled_write("       WPM:", false);
         if (wpm_counter[0]==' ') {
             if (wpm_counter[1]==' ') {
-                oled_write(&wpm_counter[2], false);            
+                oled_write(&wpm_counter[2], false);
             } else {
                 wpm_counter[4] = '\0';
                 oled_write(&wpm_counter[1], false);
