@@ -141,6 +141,7 @@ bool indicators_callback(void) {
         if (set_indicator( *(current_indicator_p)) ) sethsv( current_indicator_p -> h, current_indicator_p -> s, current_indicator_p -> v, (LED_TYPE *)&led[current_indicator_p -> index]);
         else sethsv( 0,0,0, (LED_TYPE *)&led[current_indicator_p -> index]);
     }
+    rgblight_reload_from_eeprom();
     return true;
 }
 
