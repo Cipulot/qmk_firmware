@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#define RGBLIGHT_DEFAULT_VAL 50
+#define RGBLIGHT_LIMIT_VAL 200
+#define RGBLIGHT_DEFAULT_VAL RGBLIGHT_LIMIT_VAL
 
 #define RGBLIGHT_EFFECT_BREATHING
 #define RGBLIGHT_EFFECT_RAINBOW_MOOD

@@ -15,6 +15,7 @@
  */
 
 #include "quantum.h"
+#include "print.h"
 
 /* RGB indicators: by default, they are numbered (when looking from above) INDICATOR_R, INDICATOR_C, INDICATOR_L
 */
@@ -36,41 +37,45 @@ typedef struct _indicator_config_t {
 #define INDICATOR_NUMBER 3
 
 /* List of functions:
-    0x0000 CAPS LOCK
-    0x0001 NUM LOCK
-    0x0002 SCROLL LOCK
-    0x0003 LAYER 0
-    0x0004 LAYER 1
-    0x0005 LAYER 2
-    0x0006 LAYER 3
+    0x00 NONE
+    0x01 CAPS LOCK
+    0x02 NUM LOCK
+    0x03 SCROLL LOCK
+    0x04 LAYER 0
+    0x05 LAYER 1
+    0x06 LAYER 2
+    0x07 LAYER 3
 */
 
-// Here the indicators functions themselves are programmed.
-bool set_indicator(indicator_config indicator) {
-    if (!indicator.enabled) return false;
-    switch (indicator.func)
+bool func_switch(uint8_t func) {
+    switch (func)
     {
-        case 0: // If indicator is set as caps lock
+        case 0x00:
+        {
+           return false;
+           break;
+        }
+        case 0x01: // If indicator is set as caps lock
         {
             if (host_keyboard_led_state().caps_lock) return true;
             break;
         }
-        case 1: // If indicator is set as num lock
+        case 0x02: // If indicator is set as num lock
         {
             if (host_keyboard_led_state().num_lock) return true;
             break;
         }
-        case 2: // If indicator is set as scroll lock
+        case 0x03: // If indicator is set as scroll lock
         {
             if (host_keyboard_led_state().scroll_lock) return true;
             break;
         }
-        case 3: // If indicator is set as layer 0
-        case 4:
-        case 5:
-        case 6:
+        case 0x04: // If indicator is set as layer 0
+        case 0x05:
+        case 0x06:
+        case 0x07:
         {
-            if ( IS_LAYER_ON( (int)(indicator.func) - 3  ) ) return true;
+            if ( IS_LAYER_ON( (int)(func) - 4  ) ) return true;
             break;
         }
         default:
@@ -79,6 +84,12 @@ bool set_indicator(indicator_config indicator) {
         }
     }
     return false;
+}
+
+// Here the indicators functions themselves are programmed.
+bool set_indicator(indicator_config indicator) {
+    if (!indicator.enabled) return false;
+    return func_switch(indicator.func & 0x0F) | func_switch( (indicator.func & 0xF0) >> 4);
 }
 
 typedef struct _keyboard_indicators_t {
@@ -106,15 +117,15 @@ void eeconfig_init_kb(void) {
     indicators.ind1.h = 0;
     indicators.ind1.s = 255;
     indicators.ind1.v = 150;
-    indicators.ind1.func = 0;
+    indicators.ind1.func = 0x76;
     indicators.ind1.index = 0;
     indicators.ind1.enabled = true;
 
     // INDICATOR 1: MIDDLE INDICATOR
     indicators.ind2.h = 86;
     indicators.ind2.s = 255;
-    indicators.ind2.v = 30;
-    indicators.ind2.func = 3;
+    indicators.ind2.v = 150;
+    indicators.ind2.func = 0x75;
     indicators.ind2.index = 1;
     indicators.ind2.enabled = true;
 
@@ -122,7 +133,7 @@ void eeconfig_init_kb(void) {
     indicators.ind3.h = 166;
     indicators.ind3.s = 254;
     indicators.ind3.v = 150;
-    indicators.ind3.func = 4;
+    indicators.ind3.func = 0x01;
     indicators.ind3.index = 2;
     indicators.ind3.enabled = true;
 
@@ -141,7 +152,6 @@ bool indicators_callback(void) {
         if (set_indicator( *(current_indicator_p)) ) sethsv( current_indicator_p -> h, current_indicator_p -> s, current_indicator_p -> v, (LED_TYPE *)&led[current_indicator_p -> index]);
         else sethsv( 0,0,0, (LED_TYPE *)&led[current_indicator_p -> index]);
     }
-    rgblight_reload_from_eeprom();
     return true;
 }
 
@@ -162,6 +172,9 @@ void keyboard_post_init_kb(void) {
     eeconfig_read_kb_datablock(&indicators);
     rgblight_set_effect_range(3,66);
     indicators_callback();
+
+    debug_enable = true;
+    //debug_keyboard = true;
 }
 
 // VIA CONFIGURATION -------------------------------------------------------------------------------
@@ -169,24 +182,25 @@ enum via_indicator_color {
     id_ind1_enabled = 1,
     id_ind1_brightness = 2,
     id_ind1_color = 3,
-    id_ind1_func = 4,
-    id_ind1_index = 5,
+    id_ind1_func1 = 4,
+    id_ind1_func2 = 5,
 //
     id_ind2_enabled = 6,
     id_ind2_brightness = 7,
     id_ind2_color = 8,
-    id_ind2_func = 9,
-    id_ind2_index = 10,
+    id_ind2_func1 = 9,
+    id_ind2_func2 = 10,
 //
     id_ind3_enabled = 11,
     id_ind3_brightness = 12,
     id_ind3_color = 13,
-    id_ind3_func = 14,
-    id_ind3_index = 15
+    id_ind3_func1 = 14,
+    id_ind3_func2 = 15
 };
 
 int indi_index;
 int data_index;
+
 void indicator_config_set_value( uint8_t *data )
 {
     // data = [ value_id, value_data ]
@@ -202,6 +216,7 @@ void indicator_config_set_value( uint8_t *data )
     indi_index = ( (int)(*value_id) - 1) / 5;
     data_index = (int)(*value_id) - indi_index*5;
     indicator_config* current_indicator_p = get_indicator_p(indi_index);
+    uprintf("--> value_id: %X\n", (int)(*value_id));
     switch ( data_index )
     {
         case 1 :
@@ -222,12 +237,13 @@ void indicator_config_set_value( uint8_t *data )
         }
         case 4:
         {
-                current_indicator_p -> func = value_data[0];
+                current_indicator_p -> func = (current_indicator_p -> func & 0xF0 ) | (uint8_t) value_data[0];
                 break;
         }
         case 5:
         {
-                current_indicator_p -> index = value_data[0];
+
+                current_indicator_p -> func = (current_indicator_p -> func & 0x0F ) | ((uint8_t) value_data[0] << 4);
                 break;
         }
     }
@@ -241,8 +257,7 @@ void indicator_config_get_value( uint8_t *data )
     uint8_t *value_id   = &(data[0]);
     uint8_t *value_data = &(data[1]);
 
-    indi_index = ( (int)(*value_id) - 1) / 5;
-    data_index = (int)(*value_id) - indi_index*5;
+    indi_index = ( (int)(*value_id) - 1) / 5; data_index = (int)(*value_id) - indi_index*5;
     indicator_config* current_indicator_p = get_indicator_p(indi_index);
     switch ( data_index )
     {
@@ -267,13 +282,15 @@ void indicator_config_get_value( uint8_t *data )
         case 4:
         {
 
-            value_data[0] = current_indicator_p -> func;
+            value_data[0] = current_indicator_p -> func & 0x0F;
+            uprintf("--> Current func: %x, current func with bitwise or: %X\n", current_indicator_p -> func, current_indicator_p -> func % 0x0F);
             break;
         }
         case 5:
         {
 
-            value_data[0] = current_indicator_p -> index;
+            value_data[0] = current_indicator_p -> func & 0xF0;
+            uprintf("--> Current func: %x, current func with bitwise or: %X\n", current_indicator_p -> func, current_indicator_p -> func % 0xF0);
             break;
         }
     }
