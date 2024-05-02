@@ -24,6 +24,7 @@ gmake -j16 cipulot/ec_typeb:via
 gmake -j16 cipulot/ec_typek:via
 gmake -j16 cipulot/ec_vero:via
 gmake -j16 cipulot/ec_virgo:via
+gmake -j16 cipulot/he_60:via
 gmake -j16 cipulot/je_bae_ted/mx_je_bae_ted:via
 gmake -j16 cipulot/je_bae_ted/ec_je_bae_ted:via
 gmake -j16 cipulot/lilium:via
