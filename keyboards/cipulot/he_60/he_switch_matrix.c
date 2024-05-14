@@ -56,11 +56,11 @@ static adc_mux adcMux3;
 // Initialize the multiplexers
 void init_amux(void) {
     for (uint8_t idx = 0; idx < AMUX_COUNT; idx++) {
-        setPinOutput(amux_en_pins[idx]); // set the enable pins as output
-        writePinLow(amux_en_pins[idx]);  // disable all the multiplexers for power saving
+        gpio_set_pin_output(amux_en_pins[idx]); // set the enable pins as output
+        gpio_write_pin_low(amux_en_pins[idx]);  // disable all the multiplexers for power saving
     }
     for (uint8_t idx = 0; idx < AMUX_SEL_PINS_COUNT; idx++) {
-        setPinOutput(amux_sel_pins[idx]); // set the select pins as output
+        gpio_set_pin_output(amux_sel_pins[idx]); // set the select pins as output
     }
 }
 
@@ -69,13 +69,13 @@ void select_amux_channel(uint8_t channel, uint8_t col) {
     // Get the channel for the specified multiplexer
     uint8_t ch = amux_n_col_channels[channel][col];
     // momentarily disable specified multiplexer
-    // writePinHigh(amux_en_pins[channel]);
+    // gpio_write_pin_high(amux_en_pins[channel]);
     // Select the multiplexer channel
     for (uint8_t i = 0; i < AMUX_SEL_PINS_COUNT; i++) {
-        writePin(amux_sel_pins[i], ch & (1 << i));
+        gpio_write_pin(amux_sel_pins[i], ch & (1 << i));
     }
     // re enable specified multiplexer
-    // writePinLow(amux_en_pins[channel]);
+    // gpio_write_pin_low(amux_en_pins[channel]);
 }
 
 // Disable all the unused multiplexers
@@ -83,9 +83,9 @@ void disable_unused_amux(uint8_t channel) {
     // disable all the other multiplexers apart from the current selected one and the next one
     for (uint8_t idx = 0; idx < AMUX_COUNT; idx++) {
         if (idx != channel && idx != (channel + 1) % AMUX_COUNT) {
-            writePinHigh(amux_en_pins[idx]);
+            gpio_write_pin_high(amux_en_pins[idx]);
         } else {
-            writePinLow(amux_en_pins[idx]);
+            gpio_write_pin_low(amux_en_pins[idx]);
         }
     }
 }
