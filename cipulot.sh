@@ -6,6 +6,7 @@ gmake -j16 cipulot/chroma:via
 gmake -j16 cipulot/des_60:via
 gmake -j16 cipulot/ec_23u:via
 gmake -j16 cipulot/ec_60:via
+gmake -j16 cipulot/ec_60x:via
 gmake -j16 cipulot/ec_660c:via
 gmake -j16 cipulot/ec_980c:via
 gmake -j16 cipulot/ec_adore_75:via
