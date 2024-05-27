@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "EC TKL Proto",
+    "keyboard_name": "EC TKL 1.0.0",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
