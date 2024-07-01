@@ -1,6 +1,6 @@
 # EC 60X
 
-![EC 60X PCB](https://i.imgur.com/r0IqI4d.png)
+![EC 60X PCB](https://i.imgur.com/aYQgeSn.png)
 
 Universal 60% Electrostatic Capacitive PCB, with multi-layout support.
 
