@@ -1,8 +1,8 @@
-/* Copyright 2018 REPLACE_WITH_YOUR_NAME
+/* Copyright 2024 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -13,13 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include QMK_KEYBOARD_H
 
-const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-[0] = LAYOUT( /* Base */
-    KC_INS,  KC_HOME,  KC_PGUP,
-    KC_DEL,  KC_END,   KC_PGDN,
+#pragma once
 
-             KC_UP,
-    KC_LEFT, KC_DOWN,  KC_RIGHT)
-};
+#include_next <mcuconf.h>
+
+#undef STM32_ADC_USE_ADC1
+#define STM32_ADC_USE_ADC1 TRUE
+
+#undef STM32_PWM_USE_TIM1
+#define STM32_PWM_USE_TIM1 TRUE
