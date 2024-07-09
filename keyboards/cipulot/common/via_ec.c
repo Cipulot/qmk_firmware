@@ -19,6 +19,19 @@
 #include "print.h"
 #include "via.h"
 
+#ifdef SPLIT_ENABLE
+#include "transactions.h"
+#include "tmk_core/protocol/usb_descriptor.h"
+
+void via_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
+    if (m2s_size == RAW_EPSIZE) {
+        via_config_set_value((uint8_t *)m2s_buffer);
+    } else {
+        uprintf("Unexpected response in slave handler\n"); // TODO: add split debug logging
+    }
+}
+#endif
+
 #ifdef VIA_ENABLE
 
 void ec_rescale_values(uint8_t item);
