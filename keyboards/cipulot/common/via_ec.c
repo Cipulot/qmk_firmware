@@ -27,7 +27,7 @@ void via_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m
     if (m2s_size == RAW_EPSIZE) {
         via_config_set_value((uint8_t *)m2s_buffer);
     } else {
-        uprintf("Unexpected response in slave handler\n"); // TODO: add split debug logging
+        uprintf("Unexpected response in slave handler\n");
     }
 }
 #endif
