@@ -21,7 +21,6 @@
 
 #ifdef SPLIT_KEYBOARD
 #include "transactions.h"
-#include "tmk_core/protocol/usb_descriptor.h"
 #endif
 
 #ifdef VIA_ENABLE
@@ -56,7 +55,7 @@ void via_config_set_value(uint8_t *data) {
     uint8_t *value_data = &(data[1]);
 
 #ifdef SPLIT_KEYBOARD
-    transaction_rpc_send(RPC_ID_VIA_CMD, RAW_EPSIZE, data);
+    transaction_rpc_send(RPC_ID_VIA_CMD, 30, data);
 #endif
 
     switch (*value_id) {
@@ -371,7 +370,7 @@ void ec_clear_bottoming_calibration_data(void) {
 
 #ifdef SPLIT_KEYBOARD
 void via_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
-    if (m2s_size == RAW_EPSIZE) {
+    if (m2s_size == 30) {
         via_config_set_value((uint8_t *)m2s_buffer);
     } else {
         uprintf("Unexpected response in slave handler\n");
