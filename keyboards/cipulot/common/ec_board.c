@@ -17,7 +17,7 @@
 #include "ec_switch_matrix.h"
 #include "keyboard.h"
 
-#ifdef SPLIT_ENABLE
+#ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
 #endif
 
@@ -64,7 +64,7 @@ void keyboard_post_init_kb(void) {
         }
     }
 
-#ifdef SPLIT_ENABLE
+#ifdef SPLIT_KEYBOARD
     transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
 #endif
 
