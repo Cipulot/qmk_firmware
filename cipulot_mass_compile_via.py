@@ -13,7 +13,7 @@ from qmk.keyboard import list_keyboards
 from qmk.build_targets import KeyboardKeymapBuildTarget
 
 everything = list_keyboards()
-cipu = list(filter(lambda x: x.startswith("cipulot"), everything))
+cipulot = list(filter(lambda x: x.startswith("cipulot"), everything))
 
 # remove previous artifacts
 CWD = Path(CWD)
@@ -23,15 +23,22 @@ for ext in ("uf2", "bin", "hex"):
 
 # actual compilation
 with (CWD / "cipulot.log").open("w") as file:
-    for board in cipu:
-        file.write(f"Compiling: {board}\n")
+    for board in cipulot:
+        if board == "cipulot/common":
+            continue
+
+        compile_message = f"Compiling: {board} "
+        dots = "." * (50 - len(compile_message))
+        compile_message += dots
+
+        file.write(compile_message)
 
         target = KeyboardKeymapBuildTarget(board, "via")
         target.configure(parallel=16)
 
         if target.compile() is not None:
-            file.write(f"ERROR: {board}. GIT GUT\n")
-            # error out
-            sys.exit(1)
+            file.write(f" FAILED!\n")
+        else:
+            file.write(f" SUCCESS!\n")
 
         file.flush()
