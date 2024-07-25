@@ -15,9 +15,7 @@
  */
 #include "eeprom_tools.h"
 #include "ec_switch_matrix.h"
-#include "action.h"
-#include "print.h"
-#include "via.h"
+#include "quantum.h"
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
@@ -44,7 +42,8 @@ enum via_enums {
     id_bottoming_calibration = 8,
     id_noise_floor_calibration = 9,
     id_show_calibration_data = 10,
-    id_clear_bottoming_calibration_data = 11
+    id_clear_bottoming_calibration_data = 11,
+    id_key_cancellation = 12,
     // clang-format on
 };
 
@@ -142,6 +141,20 @@ void via_config_set_value(uint8_t *data) {
                 ec_clear_bottoming_calibration_data();
             }
         }
+        case id_key_cancellation: {
+            if (value_data[0] == 1) {
+                key_cancellation_enable();
+                uprintf("##############################\n");
+                uprintf("# Key cancellation is enabled #\n");
+                uprintf("##############################\n");
+            } else {
+                key_cancellation_disable();
+                uprintf("###############################\n");
+                uprintf("# Key cancellation is disabled #\n");
+                uprintf("###############################\n");
+            }
+            break;
+        }
         default: {
             // Unhandled value.
             break;
@@ -181,6 +194,10 @@ void via_config_get_value(uint8_t *data) {
         }
         case id_mode_1_release_offset: {
             value_data[0] = eeprom_ec_config.mode_1_release_offset;
+            break;
+        }
+        case id_key_cancellation: {
+            value_data[0] = key_cancellation_is_enabled();
             break;
         }
         default: {
