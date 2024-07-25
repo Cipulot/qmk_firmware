@@ -41,6 +41,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // clang-format on
 };
 
+// clang-format off
 const key_cancellation_t PROGMEM key_cancellation_list[] = {
     // on key down
     //       |    key to be released
@@ -50,3 +51,4 @@ const key_cancellation_t PROGMEM key_cancellation_list[] = {
     [2] = {KC_W, KC_S},
     [3] = {KC_S, KC_W},
 };
+// clang-format on

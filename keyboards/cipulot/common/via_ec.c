@@ -15,7 +15,11 @@
  */
 #include "eeprom_tools.h"
 #include "ec_switch_matrix.h"
-#include "quantum.h"
+#include "process_key_cancellation.h"
+#include "action.h"
+#include "print.h"
+#include "via.h"
+
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
