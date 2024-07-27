@@ -21,6 +21,8 @@
 #    include "transactions.h"
 #endif
 
+key_cancellation_t key_cancellation_list[6];
+
 void eeconfig_init_kb(void) {
     // Default values
     eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
@@ -35,6 +37,21 @@ void eeconfig_init_kb(void) {
             eeprom_ec_config.bottoming_reading[row][col] = DEFAULT_BOTTOMING_READING;
         }
     }
+
+    eeprom_ec_config.key_cancellation_mode            = 0;
+    eeprom_ec_config.key_cancellation_list[0].press   = KC_A;
+    eeprom_ec_config.key_cancellation_list[0].unpress = KC_D;
+    eeprom_ec_config.key_cancellation_list[1].press   = KC_D;
+    eeprom_ec_config.key_cancellation_list[1].unpress = KC_A;
+    eeprom_ec_config.key_cancellation_list[2].press   = _______;
+    eeprom_ec_config.key_cancellation_list[2].unpress = _______;
+    eeprom_ec_config.key_cancellation_list[3].press   = _______;
+    eeprom_ec_config.key_cancellation_list[3].unpress = _______;
+    eeprom_ec_config.key_cancellation_list[4].press   = _______;
+    eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+    eeprom_ec_config.key_cancellation_list[5].press   = _______;
+    eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+
     // Write default value to EEPROM now
     eeconfig_update_kb_datablock(&eeprom_ec_config);
 
@@ -63,6 +80,8 @@ void keyboard_post_init_kb(void) {
             ec_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(ec_config.mode_1_initial_deadzone_offset, 0, 1023, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
         }
     }
+
+    memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
 
 #ifdef SPLIT_KEYBOARD
     transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);

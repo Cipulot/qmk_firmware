@@ -61,6 +61,13 @@ enum via_enums {
     id_show_calibration_data = 10,
     id_clear_bottoming_calibration_data = 11,
     id_key_cancellation = 12,
+    id_key_cancellation_mode = 13,
+    id_key_cancellation_pair1_key1 = 14,
+    id_key_cancellation_pair1_key2 = 15,
+    id_key_cancellation_pair2_key1 = 16,
+    id_key_cancellation_pair2_key2 = 17,
+    id_key_cancellation_pair3_key1 = 18,
+    id_key_cancellation_pair3_key2 = 19
     // clang-format on
 };
 
@@ -160,23 +167,6 @@ void via_config_set_value(uint8_t *data) {
         }
         case id_key_cancellation: {
             if (value_data[0] == 1) {
-                /*
-                [0] = {KC_D, KC_A},
-                [1] = {KC_A, KC_D},
-                [2] = {KC_W, KC_S},
-                [3] = {KC_S, KC_W},*/
-                key_cancellation_list[0].press   = KC_D;
-                key_cancellation_list[0].unpress = KC_A;
-                key_cancellation_list[1].press   = KC_A;
-                key_cancellation_list[1].unpress = KC_D;
-                key_cancellation_list[2].press   = KC_W;
-                key_cancellation_list[2].unpress = KC_S;
-                key_cancellation_list[3].press   = KC_S;
-                key_cancellation_list[3].unpress = KC_W;
-                key_cancellation_list[4].press   = KC_E;
-                key_cancellation_list[4].unpress = KC_R;
-                key_cancellation_list[5].press   = KC_R;
-                key_cancellation_list[5].unpress = KC_E;
                 key_cancellation_enable();
                 uprintf("##############################\n");
                 uprintf("# Key cancellation is enabled #\n");
@@ -187,6 +177,141 @@ void via_config_set_value(uint8_t *data) {
                 uprintf("# Key cancellation is disabled #\n");
                 uprintf("###############################\n");
             }
+            break;
+        }
+        case id_key_cancellation_mode: {
+            if (value_data[0] == 0) {
+                eeprom_ec_config.key_cancellation_mode            = 0;
+                eeprom_ec_config.key_cancellation_list[0].press   = KC_A;
+                eeprom_ec_config.key_cancellation_list[0].unpress = KC_D;
+                eeprom_ec_config.key_cancellation_list[1].press   = KC_D;
+                eeprom_ec_config.key_cancellation_list[1].unpress = KC_A;
+                eeprom_ec_config.key_cancellation_list[2].press   = _______;
+                eeprom_ec_config.key_cancellation_list[2].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[3].press   = _______;
+                eeprom_ec_config.key_cancellation_list[3].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[4].press   = _______;
+                eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[5].press   = _______;
+                eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+                eeconfig_update_kb_datablock(&eeprom_ec_config);
+                memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
+                uprintf("######################################################\n");
+                uprintf("# Key cancellation mode: Horizontal Only (A-D / D-A) #\n");
+                uprintf("######################################################\n");
+            } else if (value_data[0] == 1) {
+                eeprom_ec_config.key_cancellation_mode            = 1;
+                eeprom_ec_config.key_cancellation_list[0].press   = KC_W;
+                eeprom_ec_config.key_cancellation_list[0].unpress = KC_S;
+                eeprom_ec_config.key_cancellation_list[1].press   = KC_S;
+                eeprom_ec_config.key_cancellation_list[1].unpress = KC_W;
+                eeprom_ec_config.key_cancellation_list[2].press   = _______;
+                eeprom_ec_config.key_cancellation_list[2].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[3].press   = _______;
+                eeprom_ec_config.key_cancellation_list[3].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[4].press   = _______;
+                eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[5].press   = _______;
+                eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+                eeconfig_update_kb_datablock(&eeprom_ec_config);
+                memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
+                uprintf("####################################################\n");
+                uprintf("# Key cancellation mode: Vertical Only (W-S / S-W) #\n");
+                uprintf("####################################################\n");
+            } else if (value_data[0] == 2) {
+                eeprom_ec_config.key_cancellation_mode            = 2;
+                eeprom_ec_config.key_cancellation_list[0].press   = KC_A;
+                eeprom_ec_config.key_cancellation_list[0].unpress = KC_D;
+                eeprom_ec_config.key_cancellation_list[1].press   = KC_D;
+                eeprom_ec_config.key_cancellation_list[1].unpress = KC_A;
+                eeprom_ec_config.key_cancellation_list[2].press   = KC_W;
+                eeprom_ec_config.key_cancellation_list[2].unpress = KC_S;
+                eeprom_ec_config.key_cancellation_list[3].press   = KC_S;
+                eeprom_ec_config.key_cancellation_list[3].unpress = KC_W;
+                eeprom_ec_config.key_cancellation_list[4].press   = _______;
+                eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[5].press   = _______;
+                eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+                eeconfig_update_kb_datablock(&eeprom_ec_config);
+                memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
+                uprintf("####################################################\n");
+                uprintf("# Key cancellation mode: Vertical Only (W-S / S-W) #\n");
+                uprintf("####################################################\n");
+            } else if (value_data[0] == 3) {
+                eeprom_ec_config.key_cancellation_mode            = 3;
+                eeprom_ec_config.key_cancellation_list[0].press   = KC_Z;
+                eeprom_ec_config.key_cancellation_list[0].unpress = KC_X;
+                eeprom_ec_config.key_cancellation_list[1].press   = KC_X;
+                eeprom_ec_config.key_cancellation_list[1].unpress = KC_Z;
+                eeprom_ec_config.key_cancellation_list[2].press   = _______;
+                eeprom_ec_config.key_cancellation_list[2].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[3].press   = _______;
+                eeprom_ec_config.key_cancellation_list[3].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[4].press   = _______;
+                eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[5].press   = _______;
+                eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+                eeconfig_update_kb_datablock(&eeprom_ec_config);
+                memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
+                uprintf("####################################################\n");
+                uprintf("# Key cancellation mode: OSU! (Z-X / X-Z) #\n");
+                uprintf("####################################################\n");
+            } else if (value_data[0] == 4) {
+                eeprom_ec_config.key_cancellation_mode            = 4;
+                eeprom_ec_config.key_cancellation_list[0].press   = _______;
+                eeprom_ec_config.key_cancellation_list[0].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[1].press   = _______;
+                eeprom_ec_config.key_cancellation_list[1].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[2].press   = _______;
+                eeprom_ec_config.key_cancellation_list[2].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[3].press   = _______;
+                eeprom_ec_config.key_cancellation_list[3].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[4].press   = _______;
+                eeprom_ec_config.key_cancellation_list[4].unpress = _______;
+                eeprom_ec_config.key_cancellation_list[5].press   = _______;
+                eeprom_ec_config.key_cancellation_list[5].unpress = _______;
+                eeconfig_update_kb_datablock(&eeprom_ec_config);
+                memcpy(key_cancellation_list, eeprom_ec_config.key_cancellation_list, sizeof(eeprom_ec_config.key_cancellation_list));
+                uprintf("###########################################################\n");
+                uprintf("# Key cancellation mode: Custom (3 pairs can be defined)  #\n");
+                uprintf("###########################################################\n");
+            }
+            break;
+        }
+        case id_key_cancellation_pair1_key1: {
+            eeprom_ec_config.key_cancellation_list[0].press = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[0].press);
+            key_cancellation_list[0].press = eeprom_ec_config.key_cancellation_list[0].press;
+            break;
+        }
+        case id_key_cancellation_pair1_key2: {
+            eeprom_ec_config.key_cancellation_list[0].unpress = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[0].unpress);
+            key_cancellation_list[0].unpress = eeprom_ec_config.key_cancellation_list[0].unpress;
+            break;
+        }
+        case id_key_cancellation_pair2_key1: {
+            eeprom_ec_config.key_cancellation_list[2].press = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[2].press);
+            key_cancellation_list[2].press = eeprom_ec_config.key_cancellation_list[2].press;
+            break;
+        }
+        case id_key_cancellation_pair2_key2: {
+            eeprom_ec_config.key_cancellation_list[2].unpress = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[2].unpress);
+            key_cancellation_list[2].unpress = eeprom_ec_config.key_cancellation_list[2].unpress;
+            break;
+        }
+        case id_key_cancellation_pair3_key1: {
+            eeprom_ec_config.key_cancellation_list[4].press = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[4].press);
+            key_cancellation_list[4].press = eeprom_ec_config.key_cancellation_list[4].press;
+            break;
+        }
+        case id_key_cancellation_pair3_key2: {
+            eeprom_ec_config.key_cancellation_list[4].unpress = value_data[1] | (value_data[0] << 8);
+            EEPROM_KB_PARTIAL_UPDATE(eeprom_ec_config, key_cancellation_list[4].unpress);
+            key_cancellation_list[4].unpress = eeprom_ec_config.key_cancellation_list[4].unpress;
             break;
         }
         default: {
@@ -232,6 +357,40 @@ void via_config_get_value(uint8_t *data) {
         }
         case id_key_cancellation: {
             value_data[0] = key_cancellation_is_enabled();
+            break;
+        }
+        case id_key_cancellation_mode: {
+            value_data[0] = eeprom_ec_config.key_cancellation_mode;
+            break;
+        }
+        case id_key_cancellation_pair1_key1: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[0].press >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[0].press & 0xFF;
+            break;
+        }
+        case id_key_cancellation_pair1_key2: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[0].unpress >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[0].unpress & 0xFF;
+            break;
+        }
+        case id_key_cancellation_pair2_key1: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[2].press >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[2].press & 0xFF;
+            break;
+        }
+        case id_key_cancellation_pair2_key2: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[2].unpress >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[2].unpress & 0xFF;
+            break;
+        }
+        case id_key_cancellation_pair3_key1: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[4].press >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[4].press & 0xFF;
+            break;
+        }
+        case id_key_cancellation_pair3_key2: {
+            value_data[0] = eeprom_ec_config.key_cancellation_list[4].unpress >> 8;
+            value_data[1] = eeprom_ec_config.key_cancellation_list[4].unpress & 0xFF;
             break;
         }
         default: {

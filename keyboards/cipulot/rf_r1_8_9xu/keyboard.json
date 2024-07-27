@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "RF R1 8-9Xu",
+    "keyboard_name": "RF R1 8-9Xu (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -47,7 +47,7 @@
     "url": "https://www.github.com/Cipulot/RF_R1_8-9Xu",
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6B8B",
+        "pid": "0x0017",
         "shared_endpoint": {
             "keyboard": true
         },

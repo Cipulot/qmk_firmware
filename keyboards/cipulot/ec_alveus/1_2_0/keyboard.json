@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "EC Alveus 1.2.0",
+    "keyboard_name": "EC Alveus 1.2.0 (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -23,7 +23,7 @@
     "processor": "STM32F401",
     "usb": {
         "device_version": "1.2.0",
-        "pid": "0x6B90",
+        "pid": "0x0008",
         "shared_endpoint": {
             "keyboard": true
         },

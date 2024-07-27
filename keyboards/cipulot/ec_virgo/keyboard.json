@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "Virgo EC",
+    "keyboard_name": "Virgo EC (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -28,7 +28,7 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BC0",
+        "pid": "0x0016",
         "shared_endpoint": {
             "keyboard": true
         },

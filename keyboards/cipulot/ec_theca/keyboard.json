@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "EC Theca",
+    "keyboard_name": "EC Theca (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -23,7 +23,7 @@
     "processor": "STM32F401",
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6B7E",
+        "pid": "0x0011",
         "shared_endpoint": {
             "keyboard": true
         },

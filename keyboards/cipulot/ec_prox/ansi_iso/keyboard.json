@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "EC Pro X ANSI/ISO",
+    "keyboard_name": "EC Pro X ANSI/ISO (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -43,11 +43,11 @@
     "url": "https://www.github.com/Cipulot/EC-Pro-X",
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6B98",
+        "pid": "0x0009",
         "shared_endpoint": {
             "keyboard": true
         },
-        "vid": "0x6969"
+        "vid": "0x6369"
     },
     "layouts": {
         "LAYOUT_all": {

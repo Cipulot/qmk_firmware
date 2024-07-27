@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "EC Menhir",
+    "keyboard_name": "EC Menhir (Key Cancellation Jul 27 2024)",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -30,7 +30,7 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BB8",
+        "pid": "0x0018",
         "shared_endpoint": {
             "keyboard": true
         },

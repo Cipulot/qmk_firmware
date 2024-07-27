@@ -24,13 +24,15 @@
 #include "process_key_cancellation.h"
 
 typedef struct PACKED {
-    uint8_t  actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
-    uint16_t mode_0_actuation_threshold;                  // threshold for key press in mode 0
-    uint16_t mode_0_release_threshold;                    // threshold for key release in mode 0
-    uint16_t mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
-    uint8_t  mode_1_actuation_offset;                     // offset for key press in mode 1 and 2 (1-255)
-    uint8_t  mode_1_release_offset;                       // offset for key release in mode 1 and 2 (1-255)
-    uint16_t bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    uint8_t            actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
+    uint16_t           mode_0_actuation_threshold;                  // threshold for key press in mode 0
+    uint16_t           mode_0_release_threshold;                    // threshold for key release in mode 0
+    uint16_t           mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
+    uint8_t            mode_1_actuation_offset;                     // offset for key press in mode 1 and 2 (1-255)
+    uint8_t            mode_1_release_offset;                       // offset for key release in mode 1 and 2 (1-255)
+    uint16_t           bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    uint8_t            key_cancellation_mode;                       // 0: horizontal only, 1: vertical only, 2: custom
+    key_cancellation_t key_cancellation_list[6];                    // key cancellation list
 } eeprom_ec_config_t;
 
 typedef struct {
@@ -56,8 +58,7 @@ _Static_assert(sizeof(eeprom_ec_config_t) == EECONFIG_KB_DATA_SIZE, "Mismatch in
 extern eeprom_ec_config_t eeprom_ec_config;
 
 extern ec_config_t ec_config;
-
-extern key_cancellation_t key_cancellation_list[6]; // 6 is the maximum number of keys pair that can be cancelled
+extern key_cancellation_t key_cancellation_list[6];
 
 void init_row(void);
 void init_amux(void);
