@@ -15,6 +15,7 @@
  */
 
 #include QMK_KEYBOARD_H
+#include "keyboards/cipulot/common/ec_switch_matrix.h"
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // clang-format off
@@ -41,14 +42,3 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // clang-format on
 };
 
-// clang-format off
-const key_cancellation_t PROGMEM key_cancellation_list[] = {
-    // on key down
-    //       |    key to be released
-    //       |     |
-    [0] = {KC_D, KC_A},
-    [1] = {KC_A, KC_D},
-    [2] = {KC_W, KC_S},
-    [3] = {KC_S, KC_W},
-};
-// clang-format on

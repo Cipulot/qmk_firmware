@@ -20,6 +20,19 @@
 #include "print.h"
 #include "via.h"
 
+// clang-format off
+key_cancellation_t key_cancellation_list[] = {
+    // on key down
+    //       |    key to be released
+    //       |     |
+    [0] = {_______, _______},
+    [1] = {_______, _______},
+    [2] = {_______, _______},
+    [3] = {_______, _______},
+    [4] = {_______, _______},
+    [5] = {_______, _______},
+};
+// clang-format on
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
@@ -147,6 +160,23 @@ void via_config_set_value(uint8_t *data) {
         }
         case id_key_cancellation: {
             if (value_data[0] == 1) {
+                /*
+                [0] = {KC_D, KC_A},
+                [1] = {KC_A, KC_D},
+                [2] = {KC_W, KC_S},
+                [3] = {KC_S, KC_W},*/
+                key_cancellation_list[0].press   = KC_D;
+                key_cancellation_list[0].unpress = KC_A;
+                key_cancellation_list[1].press   = KC_A;
+                key_cancellation_list[1].unpress = KC_D;
+                key_cancellation_list[2].press   = KC_W;
+                key_cancellation_list[2].unpress = KC_S;
+                key_cancellation_list[3].press   = KC_S;
+                key_cancellation_list[3].unpress = KC_W;
+                key_cancellation_list[4].press   = KC_E;
+                key_cancellation_list[4].unpress = KC_R;
+                key_cancellation_list[5].press   = KC_R;
+                key_cancellation_list[5].unpress = KC_E;
                 key_cancellation_enable();
                 uprintf("##############################\n");
                 uprintf("# Key cancellation is enabled #\n");

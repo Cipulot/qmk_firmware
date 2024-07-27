@@ -21,6 +21,7 @@
 #include "matrix.h"
 #include "eeconfig.h"
 #include "util.h"
+#include "process_key_cancellation.h"
 
 typedef struct PACKED {
     uint8_t  actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
@@ -55,6 +56,8 @@ _Static_assert(sizeof(eeprom_ec_config_t) == EECONFIG_KB_DATA_SIZE, "Mismatch in
 extern eeprom_ec_config_t eeprom_ec_config;
 
 extern ec_config_t ec_config;
+
+extern key_cancellation_t key_cancellation_list[6]; // 6 is the maximum number of keys pair that can be cancelled
 
 void init_row(void);
 void init_amux(void);
