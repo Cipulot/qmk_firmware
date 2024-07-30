@@ -57,11 +57,12 @@ _Static_assert(sizeof(eeprom_ec_config_t) == EECONFIG_KB_DATA_SIZE, "Mismatch in
 
 extern eeprom_ec_config_t eeprom_ec_config;
 
-extern ec_config_t ec_config;
+extern ec_config_t        ec_config;
 extern key_cancellation_t key_cancellation_list[6];
 
 void init_row(void);
 void init_amux(void);
+void disable_unused_row(void);
 void select_amux_channel(uint8_t channel, uint8_t col);
 void disable_unused_amux(uint8_t channel);
 void discharge_capacitor(void);
