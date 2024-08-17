@@ -148,6 +148,8 @@ void via_config_set_value(uint8_t *data) {
                 ec_rescale_values(0);
                 ec_rescale_values(1);
                 ec_rescale_values(2);
+                ec_rescale_values(3);
+                ec_rescale_values(4);
                 uprintf("#############################\n");
                 uprintf("# Noise floor data acquired #\n");
                 uprintf("#############################\n");
@@ -157,13 +159,14 @@ void via_config_set_value(uint8_t *data) {
         case id_show_calibration_data: {
             if (value_data[0] == 0) {
                 ec_show_calibration_data();
-                break;
             }
+            break;
         }
         case id_clear_bottoming_calibration_data: {
             if (value_data[0] == 0) {
                 ec_clear_bottoming_calibration_data();
             }
+            break;
         }
         case id_key_cancellation: {
             if (value_data[0] == 1) {
@@ -460,6 +463,22 @@ void ec_rescale_values(uint8_t item) {
                 }
             }
             break;
+        // Rescale the Rapid Trigger mode actuation offsets
+        case 3:
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    ec_config.rescaled_mode_1_actuation_offset[row][col] = rescale(ec_config.mode_1_actuation_offset, 0, 1023, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+                }
+            }
+            break;
+        // Rescale the Rapid Trigger mode release offsets
+        case 4:
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    ec_config.rescaled_mode_1_release_offset[row][col] = rescale(ec_config.mode_1_release_offset, 0, 1023, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+                }
+            }
+            break;
 
         default:
             // Unhandled item.
@@ -481,6 +500,8 @@ void ec_save_threshold_data(uint8_t option) {
         eeprom_ec_config.mode_1_actuation_offset        = ec_config.mode_1_actuation_offset;
         eeprom_ec_config.mode_1_release_offset          = ec_config.mode_1_release_offset;
         ec_rescale_values(2);
+        ec_rescale_values(3);
+        ec_rescale_values(4);
     }
     eeconfig_update_kb_datablock(&eeprom_ec_config);
     uprintf("####################################\n");
@@ -496,7 +517,7 @@ void ec_save_bottoming_reading(void) {
             // 1. The key is not actually in the matrix
             // 2. The key is on an alternative layout, therefore not being pressed
             // 3. The key in in the current layout but not being pressed
-            if (ec_config.bottoming_reading[row][col] < (ec_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) {
+            if ((ec_config.bottoming_reading[row][col] < (ec_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) || (ec_config.noise_floor[row][col] == 0)) {
                 eeprom_ec_config.bottoming_reading[row][col] = 1023;
             } else {
                 eeprom_ec_config.bottoming_reading[row][col] = ec_config.bottoming_reading[row][col];
@@ -507,6 +528,8 @@ void ec_save_bottoming_reading(void) {
     ec_rescale_values(0);
     ec_rescale_values(1);
     ec_rescale_values(2);
+    ec_rescale_values(3);
+    ec_rescale_values(4);
     eeconfig_update_kb_datablock(&eeprom_ec_config);
 }
 
