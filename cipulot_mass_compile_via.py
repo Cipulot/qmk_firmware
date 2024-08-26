@@ -7,6 +7,8 @@ QMK_PY = Path("lib") / "python"
 sys.path.append(str(QMK_PY))
 
 CWD = os.getcwd()
+USERSPACE_VIA = os.path.abspath(os.path.join(CWD, "..", "qmk_userspace_via"))
+
 os.environ["QMK_HOME"] = os.environ["ORIG_CWD"] = CWD
 
 from qmk.keyboard import list_keyboards
@@ -16,12 +18,21 @@ everything = list_keyboards()
 cipulot = list(filter(lambda x: x.startswith("cipulot"), everything))
 
 # remove previous artifacts
+sys.stdout.write("Removing previous artifacts in QMK Firmware folder...\n")
 CWD = Path(CWD)
 for ext in ("uf2", "bin", "hex"):
     for file in CWD.glob(f"*.{ext}"):
         file.unlink()
 
+# remove previous artifacts
+sys.stdout.write("Removing previous artifacts in QMK Userspace VIA folder...\n")
+USERSPACE_VIA = Path(USERSPACE_VIA)
+for ext in ("uf2", "bin", "hex"):
+    for file in USERSPACE_VIA.glob(f"*.{ext}"):
+        file.unlink()
+
 # actual compilation
+sys.stdout.write("Compiling Cipulot boards with VIA...\n")
 with (CWD / "cipulot.log").open("w") as file:
     for board in cipulot:
         if board == "cipulot/common":
