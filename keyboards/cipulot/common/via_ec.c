@@ -303,11 +303,12 @@ void ec_save_threshold_data(uint8_t option) {
 void ec_save_bottoming_reading(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            // If the bottom reading doesn't go over the noise floor by BOTTOMING_CALIBRATION_THRESHOLD, it is likely that:
-            // 1. The key is not actually in the matrix
-            // 2. The key is on an alternative layout, therefore not being pressed
-            // 3. The key in in the current layout but not being pressed
-            if (ec_config.bottoming_reading[row][col] < (ec_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) {
+            // If the calibration starter flag is still set on the key, it indicates that the key was skipped during the scan because it is not physically present.
+            // If the flag is not set, it means a bottoming reading was taken. If this reading doesn't exceed the noise floor by the BOTTOMING_CALIBRATION_THRESHOLD, it likely indicates one of the following:
+            // 1. The key is part of an alternative layout and is not being pressed.
+            // 2. The key is in the current layout but is not being pressed.
+            // In both conditions we should set the bottoming reading to the maximum value to avoid false positives.
+            if (ec_config.bottoming_calibration_starter[row][col] || ec_config.bottoming_reading[row][col] < (ec_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) {
                 eeprom_ec_config.bottoming_reading[row][col] = 1023;
             } else {
                 eeprom_ec_config.bottoming_reading[row][col] = ec_config.bottoming_reading[row][col];

@@ -77,4 +77,5 @@ void     ec_print_matrix(void);
 void via_cmd_slave_handler(uint8_t m2s_size, const void* m2s_buffer, uint8_t s2m_size, void* s2m_buffer);
 #endif
 
+bool is_unused_position(uint8_t row, uint8_t col);
 uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max);
