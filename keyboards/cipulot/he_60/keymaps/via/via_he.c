@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2024 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -115,22 +115,25 @@ void via_config_set_value(uint8_t *data) {
                 he_rescale_values(0);
                 he_rescale_values(1);
                 he_rescale_values(2);
+                he_rescale_values(3);
+                he_rescale_values(4);
                 uprintf("#############################\n");
                 uprintf("# Noise floor data acquired #\n");
                 uprintf("#############################\n");
-                break;
             }
+            break;
         }
         case id_show_calibration_data: {
             if (value_data[0] == 0) {
                 he_show_calibration_data();
-                break;
             }
+            break;
         }
         case id_clear_bottoming_calibration_data: {
             if (value_data[0] == 0) {
                 he_clear_bottoming_calibration_data();
             }
+            break;
         }
         default: {
             // Unhandled value.
@@ -240,6 +243,22 @@ void he_rescale_values(uint8_t item) {
                 }
             }
             break;
+        // Rescale the Rapid Trigger mode actuation offsets
+        case 3:
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    he_config.rescaled_mode_1_actuation_offset[row][col] = rescale(he_config.mode_1_actuation_offset, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+                }
+            }
+            break;
+        // Rescale the Rapid Trigger mode release offsets
+        case 4:
+            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+                    he_config.rescaled_mode_1_release_offset[row][col] = rescale(he_config.mode_1_release_offset, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+                }
+            }
+            break;
 
         default:
             // Unhandled item.
@@ -261,6 +280,8 @@ void he_save_threshold_data(uint8_t option) {
         eeprom_he_config.mode_1_actuation_offset        = he_config.mode_1_actuation_offset;
         eeprom_he_config.mode_1_release_offset          = he_config.mode_1_release_offset;
         he_rescale_values(2);
+        he_rescale_values(3);
+        he_rescale_values(4);
     }
     eeconfig_update_kb_datablock(&eeprom_he_config);
     uprintf("####################################\n");
@@ -272,11 +293,12 @@ void he_save_threshold_data(uint8_t option) {
 void he_save_bottoming_reading(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            // If the bottom reading doesn't go over the noise floor by BOTTOMING_CALIBRATION_THRESHOLD, it is likely that:
-            // 1. The key is not actually in the matrix
-            // 2. The key is on an alternative layout, therefore not being pressed
-            // 3. The key in in the current layout but not being pressed
-            if (he_config.bottoming_reading[row][col] < (he_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) {
+            // If the calibration starter flag is still set on the key, it indicates that the key was skipped during the scan because it is not physically present.
+            // If the flag is not set, it means a bottoming reading was taken. If this reading doesn't exceed the noise floor by the BOTTOMING_CALIBRATION_THRESHOLD, it likely indicates one of the following:
+            // 1. The key is part of an alternative layout and is not being pressed.
+            // 2. The key is in the current layout but is not being pressed.
+            // In both conditions we should set the bottoming reading to the maximum value to avoid false positives.
+            if (he_config.bottoming_calibration_starter[row][col] || he_config.bottoming_reading[row][col] < (he_config.noise_floor[row][col] + BOTTOMING_CALIBRATION_THRESHOLD)) {
                 eeprom_he_config.bottoming_reading[row][col] = 1023;
             } else {
                 eeprom_he_config.bottoming_reading[row][col] = he_config.bottoming_reading[row][col];
@@ -287,6 +309,8 @@ void he_save_bottoming_reading(void) {
     he_rescale_values(0);
     he_rescale_values(1);
     he_rescale_values(2);
+    he_rescale_values(3);
+    he_rescale_values(4);
     eeconfig_update_kb_datablock(&eeprom_he_config);
 }
 

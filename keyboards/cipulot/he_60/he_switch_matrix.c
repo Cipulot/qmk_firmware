@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2024 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -283,6 +283,16 @@ void he_print_matrix(void) {
         uprintf("%4d\n", sw_value[row][MATRIX_COLS - 1]);
     }
     print("\n");
+}
+
+// Check if the position is unused
+bool is_unused_position(uint8_t row, uint8_t col) {
+    for (uint8_t i = 0; i < UNUSED_POSITIONS_COUNT; i++) {
+        if (UNUSED_POSITIONS[i][0] == row && UNUSED_POSITIONS[i][1] == col) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Rescale the value to a different range
