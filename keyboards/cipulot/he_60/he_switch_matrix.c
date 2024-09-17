@@ -285,16 +285,6 @@ void he_print_matrix(void) {
     print("\n");
 }
 
-// Check if the position is unused
-bool is_unused_position(uint8_t row, uint8_t col) {
-    for (uint8_t i = 0; i < UNUSED_POSITIONS_COUNT; i++) {
-        if (UNUSED_POSITIONS[i][0] == row && UNUSED_POSITIONS[i][1] == col) {
-            return true;
-        }
-    }
-    return false;
-}
-
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
