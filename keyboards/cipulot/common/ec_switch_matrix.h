@@ -73,9 +73,15 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col);
 bool     ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value);
 void     ec_print_matrix(void);
 
+uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max);
+
+#ifdef UNUSED_POSITIONS_LIST
+bool is_unused_position(uint8_t row, uint8_t col);
+#endif
+
 #ifdef SPLIT_KEYBOARD
 void via_cmd_slave_handler(uint8_t m2s_size, const void* m2s_buffer, uint8_t s2m_size, void* s2m_buffer);
 #endif
 
-bool is_unused_position(uint8_t row, uint8_t col);
-uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max);
+
+

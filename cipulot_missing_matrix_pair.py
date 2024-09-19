@@ -46,6 +46,32 @@ def format_pairs(pairs):
     return ", ".join(f"{{{r}, {c}}}" for r, c in pairs)
 
 
+def sort_log_file(log_file_path):
+    with open(log_file_path, "r") as log_file:
+        lines = log_file.readlines()
+
+    no_config_lines = []
+    no_missing_pairs_lines = []
+    other_lines = []
+
+    for line in lines:
+        if "MATRIX_ROWS or MATRIX_COLS not found in config.h" in line:
+            no_config_lines.append(line)
+        elif "NO MISSING PAIRS" in line:
+            no_missing_pairs_lines.append(line)
+        else:
+            other_lines.append(line)
+
+    sorted_lines = (
+        sorted(no_config_lines) +
+        sorted(no_missing_pairs_lines) +
+        sorted(other_lines)
+    )
+
+    with open(log_file_path, "w") as log_file:
+        log_file.writelines(sorted_lines)
+
+
 def main():
     base_path = "keyboards/cipulot"
     log_file_path = "cipulot.log"
@@ -89,9 +115,14 @@ def main():
                     log_file.write(f"No suitable layout found for {board_name}\n")
                     continue
 
-                unused_positions, matrix_rows, matrix_cols = parse_config_h(
-                    config_h_path
-                )
+                try:
+                    unused_positions, matrix_rows, matrix_cols = parse_config_h(
+                        config_h_path
+                    )
+                except ValueError as e:
+                    log_file.write(f"{board_name}: {str(e)}\n")
+                    continue
+
                 missing_pairs = find_missing_pairs(
                     layout, unused_positions, matrix_rows, matrix_cols
                 )
@@ -103,6 +134,9 @@ def main():
                     log_file.write(
                         f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
                     )
+
+    # Sort the log file after processing all boards
+    sort_log_file(log_file_path)
 
 
 if __name__ == "__main__":

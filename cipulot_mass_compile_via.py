@@ -47,6 +47,16 @@ with (CWD / "cipulot.log").open("w") as file:
         target = KeyboardKeymapBuildTarget(board, "via")
         target.configure(parallel=16)
 
+        # Construct the correct keymap directory path
+        keymap_directory = Path(USERSPACE_VIA) / 'keyboards' / board / 'keymaps' / 'via'
+        target.extra_args = {
+            'MAIN_KEYMAP_PATH_1': str(keymap_directory),
+            'MAIN_KEYMAP_PATH_2': str(keymap_directory),
+            'MAIN_KEYMAP_PATH_3': str(keymap_directory),
+            'MAIN_KEYMAP_PATH_4': str(keymap_directory),
+            'MAIN_KEYMAP_PATH_5': str(keymap_directory),
+        }
+
         if target.compile() is not None:
             file.write(f" FAILED!\n")
         else:

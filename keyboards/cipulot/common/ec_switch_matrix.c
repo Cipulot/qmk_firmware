@@ -31,16 +31,19 @@ eeprom_ec_config_t eeprom_ec_config;
 ec_config_t        ec_config;
 
 // Pin and port array
-const pin_t   row_pins[]                                 = MATRIX_ROW_PINS;
-const pin_t   amux_sel_pins[]                            = AMUX_SEL_PINS;
-const pin_t   amux_en_pins[]                             = AMUX_EN_PINS;
-const pin_t   amux_n_col_sizes[]                         = AMUX_COL_CHANNELS_SIZES;
-const pin_t   amux_n_col_channels[][AMUX_MAX_COLS_COUNT] = {AMUX_COL_CHANNELS};
-const uint8_t UNUSED_POSITIONS[][2]                      = UNUSED_POSITIONS_LIST;
+const pin_t row_pins[]                                 = MATRIX_ROW_PINS;
+const pin_t amux_sel_pins[]                            = AMUX_SEL_PINS;
+const pin_t amux_en_pins[]                             = AMUX_EN_PINS;
+const pin_t amux_n_col_sizes[]                         = AMUX_COL_CHANNELS_SIZES;
+const pin_t amux_n_col_channels[][AMUX_MAX_COLS_COUNT] = {AMUX_COL_CHANNELS};
+
+#ifdef UNUSED_POSITIONS_LIST
+const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
+#    define UNUSED_POSITIONS_COUNT (sizeof(UNUSED_POSITIONS) / sizeof(UNUSED_POSITIONS[0]))
+#endif
 
 #define AMUX_SEL_PINS_COUNT ARRAY_SIZE(amux_sel_pins)
 #define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT)
-#define UNUSED_POSITIONS_COUNT (sizeof(UNUSED_POSITIONS) / sizeof(UNUSED_POSITIONS[0]))
 
 // Checks for the correctness of the configuration
 _Static_assert(ARRAY_SIZE(amux_en_pins) == AMUX_COUNT, "AMUX_EN_PINS doesn't have the minimum number of bits required to enable all the multiplexers available");
@@ -171,7 +174,9 @@ void ec_noise_floor(void) {
                     sum += amux_n_col_sizes[i];
                 uint8_t adjusted_col = col + sum;
                 for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+#ifdef UNUSED_POSITIONS_LIST
                     if (is_unused_position(row, adjusted_col)) continue;
+#endif
                     disable_unused_row(row);
                     ec_config.noise_floor[row][adjusted_col] += ec_readkey_raw(amux, row, col);
                 }
@@ -200,7 +205,9 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 sum += amux_n_col_sizes[i];
             uint8_t adjusted_col = col + sum;
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+#ifdef UNUSED_POSITIONS_LIST
                 if (is_unused_position(row, adjusted_col)) continue;
+#endif
                 disable_unused_row(row);
                 sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
 
@@ -330,6 +337,7 @@ void ec_print_matrix(void) {
 }
 
 // Check if the position is unused
+#ifdef UNUSED_POSITIONS_LIST
 bool is_unused_position(uint8_t row, uint8_t col) {
     for (uint8_t i = 0; i < UNUSED_POSITIONS_COUNT; i++) {
         if (UNUSED_POSITIONS[i][0] == row && UNUSED_POSITIONS[i][1] == col) {
@@ -338,6 +346,7 @@ bool is_unused_position(uint8_t row, uint8_t col) {
     }
     return false;
 }
+#endif
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max) {
