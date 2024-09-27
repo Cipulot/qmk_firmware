@@ -1,6 +1,6 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "Big Line",
+    "keyboard_name": "CentiPCB",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
