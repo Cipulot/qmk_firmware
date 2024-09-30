@@ -51,11 +51,11 @@ void keyboard_post_init_kb(void) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             he_config.bottoming_calibration_starter[row][col]           = true;
             he_config.bottoming_reading[row][col]                       = eeprom_he_config.bottoming_reading[row][col];
-            he_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(he_config.mode_0_actuation_threshold, 0, 4095, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_0_release_threshold[row][col]       = rescale(he_config.mode_0_release_threshold, 0, 4095, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(he_config.mode_1_initial_deadzone_offset, 0, 4095, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_actuation_offset[row][col]        = rescale(he_config.mode_1_actuation_offset, 0, 4095, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_release_offset[row][col]          = rescale(he_config.mode_1_release_offset, 0, 4095, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(he_config.mode_0_actuation_threshold, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_mode_0_release_threshold[row][col]       = rescale(he_config.mode_0_release_threshold, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(he_config.mode_1_initial_deadzone_offset, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_mode_1_actuation_offset[row][col]        = rescale(he_config.mode_1_actuation_offset, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_mode_1_release_offset[row][col]          = rescale(he_config.mode_1_release_offset, 0, 1023, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
         }
     }
 }
