@@ -52,6 +52,7 @@ def sort_log_file(log_file_path):
 
     no_config_lines = []
     no_missing_pairs_lines = []
+    already_defined_lines = []
     other_lines = []
 
     for line in lines:
@@ -59,13 +60,16 @@ def sort_log_file(log_file_path):
             no_config_lines.append(line)
         elif "NO MISSING PAIRS" in line:
             no_missing_pairs_lines.append(line)
+        elif "UNUSED_POSITIONS_LIST already defined in config.h" in line:
+            already_defined_lines.append(line)
         else:
             other_lines.append(line)
 
     sorted_lines = (
-        sorted(no_config_lines) +
-        sorted(no_missing_pairs_lines) +
-        sorted(other_lines)
+        sorted(no_config_lines)
+        + sorted(no_missing_pairs_lines)
+        + sorted(already_defined_lines)
+        + sorted(other_lines)
     )
 
     with open(log_file_path, "w") as log_file:
@@ -131,9 +135,20 @@ def main():
                     log_file.write(f"{board_name} ({layout_name}): NO MISSING PAIRS\n")
                 else:
                     formatted_pairs = format_pairs(missing_pairs)
-                    log_file.write(
-                        f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
-                    )
+                    # Check if the formatted pairs match the ones in config.h
+                    with open(config_h_path, "r") as file:
+                        content = file.read()
+                        if (
+                            f"#define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}"
+                            in content
+                        ):
+                            log_file.write(
+                                f"{board_name} ({layout_name}): UNUSED_POSITIONS_LIST already defined in config.h\n"
+                            )
+                        else:
+                            log_file.write(
+                                f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
+                            )
 
     # Sort the log file after processing all boards
     sort_log_file(log_file_path)
