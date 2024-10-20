@@ -17,29 +17,26 @@
 #pragma once
 
 #define MATRIX_ROWS 6
-#define MATRIX_COLS 16
+#define MATRIX_COLS 18
 
-#define UNUSED_POSITIONS_LIST { {5, 3}, {5, 5} }
+#define UNUSED_POSITIONS_LIST { {0, 13}, {3, 14}, {3, 15}, {3, 16}, {3, 17}, {4, 15}, {4, 17}, {5, 3}, {5, 5}, {5, 7}, {5, 10}, {5, 15} }
 
-#define MATRIX_ROW_PINS \
-    { B6, B5, B12, B10, B13, B7 }
+#define MATRIX_ROW_PINS {A15, B5, B12, B10, B6, B7}
 
-#define AMUX_COUNT 1
-#define AMUX_MAX_COLS_COUNT 16
+#define AMUX_COUNT 2
+#define AMUX_MAX_COLS_COUNT 15
 
-#define AMUX_EN_PINS \
-    { A8 }
+#define AMUX_EN_PINS {B13, A10}
 
-#define AMUX_SEL_PINS \
-    { B14, B15, A9, A10 }
+#define AMUX_SEL_PINS {A8, A9, B14, B15}
 
-#define AMUX_COL_CHANNELS_SIZES \
-    { 16 }
+#define AMUX_COL_CHANNELS_SIZES {16, 8}
 
-#define AMUX_0_COL_CHANNELS \
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+#define AMUX_0_COL_CHANNELS {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14}
 
-#define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS
+#define AMUX_1_COL_CHANNELS {3, 0, 1}
+
+#define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS, AMUX_1_COL_CHANNELS
 
 #define DISCHARGE_PIN A4
 #define ANALOG_PORT A2
@@ -61,7 +58,7 @@
 #define DISCHARGE_TIME 10
 
 // #define DEBUG_MATRIX_SCAN_RATE
-#define EECONFIG_KB_DATA_SIZE 201
+#define EECONFIG_KB_DATA_SIZE 225
 
 // PWM driver with direct memory access (DMA) support
 #define WS2812_PWM_DRIVER PWMD3
