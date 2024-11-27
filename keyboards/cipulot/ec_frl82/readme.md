@@ -1,20 +1,20 @@
-# EC TKL X
+# EC FRL82
 
-![EC TKL X PCB](https://i.imgur.com/jQTHGzBh.png)
+![EC FRL82 PCB]()
 
-Universal TKL Electrostatic Capacitive PCB, with multi-layout support (F13 version).
+EC FRL with numpad.
 
 * Keyboard Maintainer: [cipulot](https://github.com/cipulot)
-* Hardware Supported: EC TKL X PCB
+* Hardware Supported: EC FRL82 PCB
 * Hardware Availability: TBD
 
 Make example for this keyboard (after setting up your build environment):
 
-    make cipulot/ec_tkl_x:default
+    make cipulot/ec_frl82:default
 
 Flashing example for this keyboard:
 
-    make cipulot/ec_tkl_x:default:flash
+    make cipulot/ec_frl82:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
