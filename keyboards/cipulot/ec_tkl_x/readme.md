@@ -1,6 +1,6 @@
 # EC TKL X
 
-![EC TKL X PCB](https://i.imgur.com/jQTHGzBh.png)
+![EC TKL X PCB](https://i.imgur.com/pdkT14y.png)
 
 Universal TKL Electrostatic Capacitive PCB, with multi-layout support (F12/F13 version).
 
