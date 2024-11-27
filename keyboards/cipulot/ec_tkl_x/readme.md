@@ -2,7 +2,7 @@
 
 ![EC TKL X PCB](https://i.imgur.com/jQTHGzBh.png)
 
-Universal TKL Electrostatic Capacitive PCB, with multi-layout support (F13 version).
+Universal TKL Electrostatic Capacitive PCB, with multi-layout support (F12/F13 version).
 
 * Keyboard Maintainer: [cipulot](https://github.com/cipulot)
 * Hardware Supported: EC TKL X PCB
