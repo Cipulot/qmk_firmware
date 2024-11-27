@@ -1,6 +1,6 @@
 # Constellation EC
 
-![Constellation EC PCB](https://i.imgur.com/VZbh6oD.png)
+![Constellation EC](https://i.imgur.com/ndgUV63.jpeg)
 
 EC version of the  Constellation keyboard.
 
