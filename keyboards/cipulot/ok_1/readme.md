@@ -1,12 +1,10 @@
 # OK-1
 
-![OK-1]()
-
-DESCRIPTION.
+OK-1 is a low profile keyboard.
 
 * Keyboard Maintainer: [cipulot](https://github.com/cipulot)
 * Hardware Supported: OK-1
-* Hardware Availability: []()
+* Hardware Availability: TBD
 
 Make example for this keyboard (after setting up your build environment):
 
