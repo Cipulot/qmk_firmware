@@ -1,20 +1,20 @@
-# EC Minimi40 Ortho
+# EC Minimi40 Stagger
 
-![EC Minimi40 Ortho PCB]()
+![EC Minimi40 Stagger PCB]()
 
-EC version of the Minimi40 keyboard by Keebibi (ortho layout).
+EC version of the Minimi40 keyboard by Keebibi (stagger layout).
 
 * Keyboard Maintainer: [cipulot](https://github.com/cipulot)
-* Hardware Supported: EC Minimi40 Ortho PCB
+* Hardware Supported: EC Minimi40 Stagger PCB
 * Hardware Availability: TBD
 
 Make example for this keyboard (after setting up your build environment):
 
-    make cipulot/ec_minimi40/ortho:default
+    make cipulot/ec_minimi40/stagger:default
 
 Flashing example for this keyboard:
 
-    make cipulot/ec_minimi40/ortho:default:flash
+    make cipulot/ec_minimi40/stagger:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
