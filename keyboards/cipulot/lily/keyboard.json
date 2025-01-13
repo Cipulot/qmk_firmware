@@ -1,7 +1,7 @@
 {
     "manufacturer": "ai03 Design Studio",
     "keyboard_name": "Lily",
-    "maintainer": "ai03_2725",
+    "maintainer": "ai03",
     "bootloader": "atmel-dfu",
     "build": {
         "debounce_type": "asym_eager_defer_pk"
