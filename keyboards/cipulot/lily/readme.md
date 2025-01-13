@@ -1,6 +1,6 @@
 # Lily
 
-![Lily](Insert link)
+![Lily](https://i.imgur.com/nIhwT2V.png)
 
 PCB for Gok's Lily keyboard
 
