@@ -4,7 +4,8 @@
     "maintainer": "ai03",
     "bootloader": "atmel-dfu",
     "build": {
-        "debounce_type": "asym_eager_defer_pk"
+        "debounce_type": "asym_eager_defer_pk",
+        "lto": true
     },
     "diode_direction": "COL2ROW",
     "features": {
@@ -42,8 +43,7 @@
             "static_gradient": true,
             "twinkle": true
         },
-        "led_count": 4,
-        "led_map": [0, 1, 2, 3]
+        "led_count": 4
     },
     "usb": {
         "device_version": "0.0.1",
@@ -53,6 +53,7 @@
     "ws2812": {
         "pin": "D2"
     },
+    "community_layouts": ["60_hhkb"],
     "layouts": {
         "LAYOUT_60_hhkb": {
             "layout": [
@@ -69,7 +70,8 @@
                 {"matrix": [0, 10], "x": 10, "y": 0},
                 {"matrix": [0, 11], "x": 11, "y": 0},
                 {"matrix": [0, 12], "x": 12, "y": 0},
-                {"matrix": [0, 13], "x": 13, "y": 0, "w": 2},
+                {"matrix": [0, 13], "x": 13, "y": 0},
+                {"matrix": [2, 12], "x": 14, "y": 0},
                 {"matrix": [1, 0], "x": 0, "y": 1, "w": 1.5},
                 {"matrix": [1, 1], "x": 1.5, "y": 1},
                 {"matrix": [1, 2], "x": 2.5, "y": 1},
