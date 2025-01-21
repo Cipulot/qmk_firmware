@@ -9,7 +9,7 @@
     "diode_direction": "COL2ROW",
     "encoder": {
         "rotary": [
-            {"pin_a": "B3", "pin_b": "B4"}
+            {"pin_a": "F0", "pin_b": "F1"}
         ]
     },
     "features": {
@@ -21,8 +21,8 @@
         "rgblight": true
     },
     "matrix_pins": {
-        "cols": ["B10", "B2", "B1", "B0", "A7", "A6", "A5", "A1", "A0", "F1", "F0", "C15", "A4", "A3", "B6"],
-        "rows": ["B11", "A2", "B9", "B8", "B7"]
+        "cols": ["B14", "B12", "B11", "B10", "B2", "B1", "B0", "A7", "A6", "A5", "A4", "A3", "A2", "A1", "A0"],
+        "rows": ["A15", "B7", "B13", "B15", "A8"]
     },
     "processor": "STM32F072",
     "qmk": {
@@ -44,7 +44,7 @@
             "static_gradient": true,
             "twinkle": true
         },
-        "led_count": 19
+        "led_count": 26
     },
     "usb": {
         "device_version": "0.0.1",
@@ -56,7 +56,7 @@
     },
     "ws2812": {
         "driver": "pwm",
-        "pin": "B13"
+        "pin": "A9"
     },
     "layouts": {
         "LAYOUT_65_ansi_blocker": {
