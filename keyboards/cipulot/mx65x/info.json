@@ -1,6 +1,5 @@
 {
     "manufacturer": "Cipulot",
-    "keyboard_name": "MX65X Hotswap",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
     "build": {
@@ -48,7 +47,6 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BD8",
         "shared_endpoint": {
             "keyboard": true
         },
