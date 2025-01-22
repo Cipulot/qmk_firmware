@@ -1,6 +1,6 @@
 # MX65X Hotswap
 
-![MX65X Hotswap]()
+![MX65X Hotswap](https://i.imgur.com/18DnNrw.png)
 
 A 65% hotswap and hot swap PCB.
 

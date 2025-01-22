@@ -1,6 +1,6 @@
-# MX65X
+# MX65X Solder
 
-![MX65X Solder]()
+![MX65X Solder](https://i.imgur.com/M2lyPuo.png)
 
 A 65% solder and hot swap PCB.
 
