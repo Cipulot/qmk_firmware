@@ -1,4 +1,4 @@
-/* Copyright 2024 Cipulot
+/* Copyright 2025 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,31 +16,10 @@
 
 #pragma once
 
-#define MATRIX_ROWS 5
-#define MATRIX_COLS 16
+#define MATRIX_ROWS 1
+#define MATRIX_COLS 1
 
-#define UNUSED_POSITIONS_LIST { {2, 14}, {3, 13}, {4, 3}, {4, 5}, {4, 7}, {4, 9}, {4, 13} }
-
-#define MATRIX_ROW_PINS \
-    { A8, A15, B13, B8, B9}
-
-#define AMUX_COUNT 1
-#define AMUX_MAX_COLS_COUNT 16
-
-#define AMUX_EN_PINS \
-    { B5 }
-
-#define AMUX_SEL_PINS \
-    { B6, B7, B4, B3 }
-
-#define AMUX_COL_CHANNELS_SIZES \
-    { 16 }
-
-#define AMUX_0_COL_CHANNELS \
-    { 7, 6, 5, 4, 3, 2, 1, 0, 8, 15, 14, 12, 11, 13, 9, 10}
-
-#define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS
-
+#define MATRIX_ROW_PIN A14
 #define DISCHARGE_PIN A2
 #define ANALOG_PORT A3
 
@@ -60,12 +39,4 @@
 
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 169
-
-// PWM driver with direct memory access (DMA) support
-#define WS2812_PWM_COMPLEMENTARY_OUTPUT
-#define WS2812_PWM_DRIVER PWMD1
-#define WS2812_PWM_CHANNEL 3
-#define WS2812_PWM_PAL_MODE 1
-#define WS2812_DMA_STREAM STM32_DMA2_STREAM5
-#define WS2812_DMA_CHANNEL 6
+#define EECONFIG_KB_DATA_SIZE 12
