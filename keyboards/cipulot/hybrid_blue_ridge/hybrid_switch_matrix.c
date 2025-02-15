@@ -234,7 +234,16 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     }
                 }
 
-                updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
+                if (ec_config.bottoming_calibration) {
+                    if (ec_config.bottoming_calibration_starter[row][adjusted_col]) {
+                        ec_config.bottoming_reading[row][adjusted_col]             = sw_value[row][adjusted_col];
+                        ec_config.bottoming_calibration_starter[row][adjusted_col] = false;
+                    } else if (sw_value[row][adjusted_col] > ec_config.bottoming_reading[row][adjusted_col]) {
+                        ec_config.bottoming_reading[row][adjusted_col] = sw_value[row][adjusted_col];
+                    }
+                } else {
+                    updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
+                }
             }
         }
     }
