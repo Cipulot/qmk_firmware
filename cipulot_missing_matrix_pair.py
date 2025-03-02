@@ -90,8 +90,12 @@ def main():
                 keyboard_json_path = os.path.join(root, "keyboard.json")
                 config_h_path = os.path.join(root, "config.h")
 
-                with open(keyboard_json_path, "r") as file:
-                    keyboard_data = json.load(file)
+                try:
+                    with open(keyboard_json_path, "r") as file:
+                        keyboard_data = json.load(file)
+                except json.JSONDecodeError:
+                    log_file.write(f"Error decoding JSON in {keyboard_json_path}\n")
+                    continue
 
                 board_name = keyboard_data.get("keyboard_name", "Unknown Board")
 
