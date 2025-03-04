@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "hybrid_switch_matrix.h"
+#include "ec_switch_matrix.h"
 #include "analog.h"
 #include "atomic_util.h"
 #include "math.h"
@@ -153,75 +153,60 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
         ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
     }
 
-    if (ec_config.switch_type == 1) {
-        // MX
-        if (current_state && sw_value < 500) {
+    // Normal board-wide APC
+    if (ec_config.actuation_mode == 0) {
+        if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold) {
             *current_row &= ~(1 << 0);
-            uprintf("MX Key released!\n");
+            uprintf("Key released: %d\n", sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > 1000) {
+        if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold) {
             *current_row |= (1 << 0);
-            uprintf("MX Key pressed!\n");
+            uprintf("Key pressed: %d\n", sw_value);
             return true;
         }
-    } else if (ec_config.switch_type == 0) {
-        // EC
-        // Normal board-wide APC
-        if (ec_config.actuation_mode == 0) {
-            if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold) {
-                *current_row &= ~(1 << 0);
-                uprintf("EC Key released: %d\n", sw_value);
-                return true;
-            }
-            if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold) {
-                *current_row |= (1 << 0);
-                uprintf("EC Key pressed: %d\n", sw_value);
-                return true;
-            }
-        }
-        // Rapid Trigger
-        else if (ec_config.actuation_mode == 1) {
-            // Is key in active zone?
-            if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset) {
-                // Is key pressed while in active zone?
-                if (current_state) {
-                    // Is the key still moving down?
-                    if (sw_value > ec_config.extremum) {
-                        ec_config.extremum = sw_value;
-                        uprintf("EC Key pressed: %d\n", sw_value);
-                    }
-                    // Has key moved up enough to be released?
-                    else if (sw_value < ec_config.extremum - ec_config.rescaled_mode_1_release_offset) {
-                        ec_config.extremum = sw_value;
-                        *current_row &= ~(1 << 0);
-                        uprintf("EC Key released: %d\n", sw_value);
-                        return true;
-                    }
+    }
+    // Rapid Trigger
+    else if (ec_config.actuation_mode == 1) {
+        // Is key in active zone?
+        if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset) {
+            // Is key pressed while in active zone?
+            if (current_state) {
+                // Is the key still moving down?
+                if (sw_value > ec_config.extremum) {
+                    ec_config.extremum = sw_value;
+                    uprintf("Key pressed: %d\n", sw_value);
                 }
-                // Key is not pressed while in active zone
-                else {
-                    // Is the key still moving up?
-                    if (sw_value < ec_config.extremum) {
-                        ec_config.extremum = sw_value;
-                    }
-                    // Has key moved down enough to be pressed?
-                    else if (sw_value > ec_config.extremum + ec_config.rescaled_mode_1_actuation_offset) {
-                        ec_config.extremum = sw_value;
-                        *current_row |= (1 << 0);
-                        uprintf("EC Key pressed: %d\n", sw_value);
-                        return true;
-                    }
-                }
-            }
-            // Key is not in active zone
-            else {
-                // Check to avoid key being stuck in pressed state near the active zone threshold
-                if (sw_value < ec_config.extremum) {
+                // Has key moved up enough to be released?
+                else if (sw_value < ec_config.extremum - ec_config.rescaled_mode_1_release_offset) {
                     ec_config.extremum = sw_value;
                     *current_row &= ~(1 << 0);
+                    uprintf("Key released: %d\n", sw_value);
                     return true;
                 }
+            }
+            // Key is not pressed while in active zone
+            else {
+                // Is the key still moving up?
+                if (sw_value < ec_config.extremum) {
+                    ec_config.extremum = sw_value;
+                }
+                // Has key moved down enough to be pressed?
+                else if (sw_value > ec_config.extremum + ec_config.rescaled_mode_1_actuation_offset) {
+                    ec_config.extremum = sw_value;
+                    *current_row |= (1 << 0);
+                    uprintf("Key pressed: %d\n", sw_value);
+                    return true;
+                }
+            }
+        }
+        // Key is not in active zone
+        else {
+            // Check to avoid key being stuck in pressed state near the active zone threshold
+            if (sw_value < ec_config.extremum) {
+                ec_config.extremum = sw_value;
+                *current_row &= ~(1 << 0);
+                return true;
             }
         }
     }
