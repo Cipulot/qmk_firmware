@@ -35,20 +35,20 @@ static adc_mux adcMux;
 void init_row(void) {
     // Set all row pins as output and low
     for (uint8_t idx = 0; idx < MATRIX_ROWS; idx++) {
-        setPinOutput(row_pins[idx]);
-        writePinLow(row_pins[idx]);
+        gpio_set_pin_output(row_pins[idx]);
+        gpio_write_pin_low(row_pins[idx]);
     }
 }
 
 // Discharge the peak hold capacitor
 void discharge_capacitor(void) {
-    writePinLow(DISCHARGE_PIN);
+    gpio_write_pin_low(DISCHARGE_PIN);
 }
 
 // Charge the peak hold capacitor
 void charge_capacitor(uint8_t row) {
-    writePinHigh(DISCHARGE_PIN);
-    writePinHigh(row_pins[row]);
+    gpio_write_pin_high(DISCHARGE_PIN);
+    gpio_write_pin_high(row_pins[row]);
 }
 
 // Initialize the peripherals pins
@@ -61,8 +61,8 @@ int ec_init(void) {
     adc_read(adcMux);
 
     // Initialize discharge pin as discharge mode
-    writePinLow(DISCHARGE_PIN);
-    setPinOutputOpenDrain(DISCHARGE_PIN);
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_outputOpenDrain(DISCHARGE_PIN);
 
     // Initialize drive lines
     init_row();
@@ -124,7 +124,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     uint16_t sw_value = 0;
 
     // Set the row pin to low state to avoid ghosting
-    writePinLow(row_pins[row]);
+    gpio_write_pin_low(row_pins[row]);
 
     ATOMIC_BLOCK_FORCEON {
         // Set the row pin to high state and have capacitor charge
