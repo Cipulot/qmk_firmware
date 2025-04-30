@@ -1,0 +1,2 @@
+OPT = 3
+SERIAL_DRIVER = usart
