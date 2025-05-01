@@ -1,59 +1,7 @@
 {
-    "manufacturer": "Cipulot",
     "keyboard_name": "Glare 60 MX HHKB",
-    "maintainer": "Cipulot",
-    "bootloader": "stm32-dfu",
-    "build": {
-        "lto": true
-    },
-    "diode_direction": "COL2ROW",
-    "dynamic_keymap": {
-        "layer_count": 8
-    },
-    "features": {
-        "bootmagic": true,
-        "extrakey": true,
-        "mousekey": true,
-        "nkro": true,
-        "rgblight": true
-    },
-    "matrix_pins": {
-        "cols": ["A10", "F1", "F0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "B0", "B1", "B2", "B10", "B11"],
-        "rows": ["B8", "B9", "A8", "B12", "B13"]
-    },
-    "processor": "STM32F072",
-    "qmk": {
-        "locking": {
-            "enabled": true,
-            "resync": true
-        }
-    },
-    "rgblight": {
-        "animations": {
-            "alternating": true,
-            "breathing": true,
-            "christmas": true,
-            "knight": true,
-            "rainbow_mood": true,
-            "rainbow_swirl": true,
-            "rgb_test": true,
-            "snake": true,
-            "static_gradient": true,
-            "twinkle": true
-        },
-        "led_count": 3
-    },
     "usb": {
-        "device_version": "0.0.1",
-        "pid": "0x6BE4",
-        "shared_endpoint": {
-            "keyboard": true
-        },
-        "vid": "0x6369"
-    },
-    "ws2812": {
-        "driver": "pwm",
-        "pin": "A9"
+        "pid": "0x6BE4"
     },
     "layouts": {
         "LAYOUT_60_hhkb": {
@@ -150,7 +98,6 @@
                 {"matrix": [1, 10], "x": 10.5, "y": 1},
                 {"matrix": [1, 11], "x": 11.5, "y": 1},
                 {"matrix": [1, 12], "x": 12.5, "y": 1},
-                {"matrix": [2, 14], "x": 13.75, "y": 1, "w": 1.25, "h": 2},
                 {"matrix": [2, 0], "x": 0, "y": 2, "w": 1.75},
                 {"matrix": [2, 1], "x": 1.75, "y": 2},
                 {"matrix": [2, 2], "x": 2.75, "y": 2},
@@ -164,6 +111,7 @@
                 {"matrix": [2, 10], "x": 10.75, "y": 2},
                 {"matrix": [2, 11], "x": 11.75, "y": 2},
                 {"matrix": [2, 12], "x": 12.75, "y": 2},
+                {"matrix": [2, 14], "x": 13.75, "y": 1, "w": 1.25, "h": 2},
                 {"matrix": [3, 0], "x": 0, "y": 3, "w": 1.25},
                 {"matrix": [3, 1], "x": 1.25, "y": 3},
                 {"matrix": [3, 2], "x": 2.25, "y": 3},
