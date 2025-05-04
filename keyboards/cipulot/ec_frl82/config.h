@@ -30,7 +30,7 @@
 
 #define AMUX_SEL_PINS {B6, B7, B4, B3}
 
-#define AMUX_COL_CHANNELS_SIZES {15, 3}
+#define AMUX_COL_CHANNELS_SIZES {15, 4}
 
 #define AMUX_0_COL_CHANNELS {7, 6, 5, 4, 3, 2, 1, 0, 8, 14, 13, 12, 9, 10, 11}
 
