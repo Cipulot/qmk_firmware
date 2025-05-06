@@ -17,7 +17,7 @@
 #pragma once
 
 /* Solenoid support */
-#define SOLENOID_PIN A13
+#define SOLENOID_PIN B15
 #define SOLENOID_DEFAULT_DWELL 15
 
 /* Indicator LEDs */
