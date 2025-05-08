@@ -1,5 +1,5 @@
 {
-    "manufacturer": "Cipulot",
+    "manufacturer": "Geon",
     "keyboard_name": "3X3 MACRO",
     "maintainer": "Cipulot",
     "bootloader": "stm32-dfu",
@@ -15,13 +15,6 @@
         "extrakey": true,
         "mousekey": true,
         "nkro": true
-    },
-    "matrix_pins": {
-        "direct": [
-            ["B10", "B7", "B8"],
-            ["B11", "B6", "B9"],
-            ["A3", "F0", "F1"]
-        ]
     },
     "processor": "STM32F072",
     "qmk": {
