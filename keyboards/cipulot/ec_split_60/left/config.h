@@ -19,7 +19,7 @@
 #define MATRIX_ROW_PINS {B14, B15, B9, B3, B8, B14, B15, B9, B3, B8}
 
 #define AMUX_COUNT 1
-#define AMUX_MAX_COLS_COUNT 8
+#define AMUX_MAX_COLS_COUNT 6
 
 #define AMUX_EN_PINS {B7}
 

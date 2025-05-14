@@ -1,2 +1,2 @@
-OPT = 3
+OPT = 2
 SERIAL_DRIVER = usart
