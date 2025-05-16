@@ -35,4 +35,4 @@
 #define ANALOG_PORT A3
 
 // Split keyboard configuration
-#define USB_VBUS_PIN A8
+//#define USB_VBUS_PIN A8

@@ -35,4 +35,4 @@
 #define ANALOG_PORT A7
 
 // Split keyboard configuration
-#define USB_VBUS_PIN B9
+//#define USB_VBUS_PIN B9
