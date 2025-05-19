@@ -43,7 +43,7 @@ const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
 #endif
 
 #define AMUX_SEL_PINS_COUNT ARRAY_SIZE(amux_sel_pins)
-#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT)
+#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT))
 
 // Checks for the correctness of the configuration
 _Static_assert(ARRAY_SIZE(amux_en_pins) == AMUX_COUNT, "AMUX_EN_PINS doesn't have the minimum number of bits required to enable all the multiplexers available");
