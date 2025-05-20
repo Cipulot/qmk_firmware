@@ -50,11 +50,11 @@ void keyboard_post_init_kb(void) {
     ec_config.bottoming_calibration                   = false;
     ec_config.bottoming_calibration_starter           = true;
     ec_config.bottoming_reading                       = eeprom_ec_config.bottoming_reading;
-    ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_actuation_offset        = rescale(ec_config.mode_1_actuation_offset, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_release_offset          = rescale(ec_config.mode_1_release_offset, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_mode_1_actuation_offset        = rescale(ec_config.mode_1_actuation_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_mode_1_release_offset          = rescale(ec_config.mode_1_release_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
 
     keyboard_post_init_user();
 }

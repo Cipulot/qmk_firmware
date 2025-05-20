@@ -148,9 +148,9 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
     if (sw_value < (ec_config.noise_floor - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d\n", sw_value);
         ec_config.noise_floor                             = sw_value;
-        ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, 0, 1023, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
     }
 
     // Normal board-wide APC
@@ -220,6 +220,6 @@ void ec_print_matrix(void) {
 }
 
 // Rescale the value to a different range
-uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
+    return x  * (out_max - out_min) / ADC_SATURATION + out_min;
 }

@@ -209,9 +209,9 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
     if (sw_value < (he_config.noise_floor[amux][col] - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d, %d, %d\n", amux, col, sw_value);
         he_config.noise_floor[amux][col]                             = sw_value;
-        he_config.rescaled_mode_0_actuation_threshold[amux][col]     = rescale(he_config.mode_0_actuation_threshold, 0, 1023, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_mode_0_release_threshold[amux][col]       = rescale(he_config.mode_0_release_threshold, 0, 1023, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_mode_1_initial_deadzone_offset[amux][col] = rescale(he_config.mode_1_initial_deadzone_offset, 0, 1023, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_mode_0_actuation_threshold[amux][col]     = rescale(he_config.mode_0_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_mode_0_release_threshold[amux][col]       = rescale(he_config.mode_0_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_mode_1_initial_deadzone_offset[amux][col] = rescale(he_config.mode_1_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
     }
 
     // Normal board-wide APC
@@ -286,6 +286,6 @@ void he_print_matrix(void) {
 }
 
 // Rescale the value to a different range
-uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
+    return x  * (out_max - out_min) / ADC_SATURATION + out_min;
 }
