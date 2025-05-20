@@ -52,8 +52,6 @@
 #define DEFAULT_CALIBRATION_STARTER true
 
 #define DISCHARGE_TIME 10
-
-// #define DEBUG_MATRIX_SCAN_RATE
 #define EECONFIG_KB_DATA_SIZE 311
 
 // PWM driver with direct memory access (DMA) support
