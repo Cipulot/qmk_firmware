@@ -62,7 +62,7 @@ int ec_init(void) {
 
     // Initialize discharge pin as discharge mode
     gpio_write_pin_low(DISCHARGE_PIN);
-    gpio_set_pin_outputOpenDrain(DISCHARGE_PIN);
+    gpio_set_pin_output_open_drain(DISCHARGE_PIN);
 
     // Initialize drive lines
     init_row();
