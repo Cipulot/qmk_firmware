@@ -57,7 +57,7 @@ void via_config_set_value(uint8_t *data) {
 
 #    ifdef SPLIT_KEYBOARD
     if (is_keyboard_master()) {
-        transaction_rpc_send(RPC_ID_VIA_CMD, 30, data);
+        transaction_rpc_send(RPC_ID_VIA_CMD, RAW_EPSIZE - 2, data);
     }
 #    endif
 
