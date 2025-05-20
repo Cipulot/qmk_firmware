@@ -63,7 +63,7 @@
 
 // #define DEBUG_MATRIX_SCAN_RATE
 
-#define EECONFIG_KB_DATA_SIZE 129
+#define EECONFIG_KB_DATA_SIZE 131
 
 /*
 #define L_MASK 0x08
