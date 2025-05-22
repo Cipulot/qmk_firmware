@@ -105,7 +105,7 @@ indicator_config *get_indicator_p(int index);
 #    define ADC_SATURATION ((1 << 10) - 1)
 #elif (ADC_RESOLUTION == ADC_CFGR_RES_8BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_8BIT)
 #    define ADC_SATURATION ((1 << 8) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR1_RES_6BIT) || (ADC_RESOLUTION == ADC_CFGR1_RES_6BIT)
+#elif (ADC_RESOLUTION == ADC_CFGR_RES_6BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_6BIT)
 #    define ADC_SATURATION ((1 << 6) - 1)
 #else
 #    define ADC_SATURATION ((1 << 10) - 1)
