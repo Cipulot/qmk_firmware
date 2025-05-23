@@ -349,5 +349,5 @@ bool is_unused_position(uint8_t row, uint8_t col) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / ADC_SATURATION + out_min;
+    return x  * (out_max - out_min) / 1023 + out_min;
 }

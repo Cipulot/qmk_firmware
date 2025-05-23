@@ -287,5 +287,5 @@ void he_print_matrix(void) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / ADC_SATURATION + out_min;
+    return x  * (out_max - out_min) / 1023 + out_min;
 }
