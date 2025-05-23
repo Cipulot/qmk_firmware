@@ -298,7 +298,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
 
     if (ec_config.switch_type == 1) {
         // MX
-        if (current_state && sw_value < SCALE_TO_SATURATION(49)) {
+        if (current_state && sw_value < 500) {
             *current_row &= ~(1 << col);
             uprintf("MX Key released: %d, %d, %d\n", row, col, sw_value);
             return true;

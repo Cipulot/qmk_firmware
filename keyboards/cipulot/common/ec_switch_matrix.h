@@ -82,21 +82,3 @@ bool is_unused_position(uint8_t row, uint8_t col);
 #ifdef SPLIT_KEYBOARD
 void via_cmd_slave_handler(uint8_t m2s_size, const void* m2s_buffer, uint8_t s2m_size, void* s2m_buffer);
 #endif
-
-#if (ADC_RESOLUTION == ADC_CFGR_RES_16BITS)
-#    define ADC_SATURATION ((1 << 16) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR_RES_14BITS)
-#    define ADC_SATURATION ((1 << 14) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR_RES_12BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_12BIT)
-#    define ADC_SATURATION ((1 << 12) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR_RES_10BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_10BIT)
-#    define ADC_SATURATION ((1 << 10) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR_RES_8BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_8BIT)
-#    define ADC_SATURATION ((1 << 8) - 1)
-#elif (ADC_RESOLUTION == ADC_CFGR_RES_6BITS) || (ADC_RESOLUTION == ADC_CFGR1_RES_6BIT)
-#    define ADC_SATURATION ((1 << 6) - 1)
-#else
-#    define ADC_SATURATION ((1 << 10) - 1)
-#endif
-
-#define SCALE_TO_SATURATION(pct) ((uint16_t)(((uint32_t)(pct) * ADC_SATURATION) / 100))
