@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2025 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,9 +61,7 @@
 
 #define DISCHARGE_TIME 10
 
-// #define DEBUG_MATRIX_SCAN_RATE
-
-#define EECONFIG_KB_DATA_SIZE 171
+#define EECONFIG_KB_DATA_SIZE 173
 
 // RGB & Indicators
 // PWM driver with direct memory access (DMA) support
