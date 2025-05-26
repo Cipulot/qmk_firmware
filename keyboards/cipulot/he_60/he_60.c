@@ -37,7 +37,7 @@ void eeconfig_init_kb(void) {
 // On Keyboard startup
 void keyboard_post_init_kb(void) {
     // Read custom menu variables from memory
-    eeconfig_read_kb_datablock(&eeprom_he_config);
+    eeconfig_read_kb_datablock(&eeprom_he_config, 0, EECONFIG_KB_DATA_SIZE);
 
     // Set runtime values to EEPROM values
     he_config.actuation_mode                 = eeprom_he_config.actuation_mode;
