@@ -31,7 +31,7 @@ void eeconfig_init_kb(void) {
         }
     }
     // Write default value to EEPROM now
-    eeconfig_update_kb_datablock(&eeprom_he_config);
+    eeconfig_update_kb_datablock(&eeprom_he_config, 0, EECONFIG_KB_DATA_SIZE);
 }
 
 // On Keyboard startup

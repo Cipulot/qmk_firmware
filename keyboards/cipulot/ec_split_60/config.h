@@ -35,7 +35,7 @@
 
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 171
+#define EECONFIG_KB_DATA_SIZE 169
 
 // Split keyboard configuration
 #define SERIAL_USART_DRIVER SD1
