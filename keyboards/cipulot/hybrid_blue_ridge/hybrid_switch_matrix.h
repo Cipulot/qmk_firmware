@@ -21,16 +21,18 @@
 #include "matrix.h"
 #include "eeconfig.h"
 #include "util.h"
+#include "socd_cleaner.h"
 
 typedef struct PACKED {
-    uint8_t  switch_type;                                 // 0: EC, 1: MX
-    uint8_t  actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
-    uint16_t mode_0_actuation_threshold;                  // threshold for key press in mode 0
-    uint16_t mode_0_release_threshold;                    // threshold for key release in mode 0
-    uint16_t mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
-    uint8_t  mode_1_actuation_offset;                     // offset for key press in mode 1 (1-255)
-    uint8_t  mode_1_release_offset;                       // offset for key release in mode 1 (1-255)
-    uint16_t bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    uint8_t        switch_type;                                 // 0: EC, 1: MX
+    uint8_t        actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
+    uint16_t       mode_0_actuation_threshold;                  // threshold for key press in mode 0
+    uint16_t       mode_0_release_threshold;                    // threshold for key release in mode 0
+    uint16_t       mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
+    uint8_t        mode_1_actuation_offset;                     // offset for key press in mode 1 (1-255)
+    uint8_t        mode_1_release_offset;                       // offset for key release in mode 1 (1-255)
+    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    socd_cleaner_t socd_opposing_pairs[4];                      // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
@@ -60,6 +62,8 @@ extern eeprom_ec_config_t eeprom_ec_config;
 
 extern ec_config_t ec_config;
 
+extern socd_cleaner_t socd_opposing_pairs[4];
+
 void init_row(void);
 void init_amux(void);
 void disable_unused_row(uint8_t row);
@@ -81,6 +85,3 @@ uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 bool is_unused_position(uint8_t row, uint8_t col);
 #endif
 
-#ifdef SPLIT_KEYBOARD
-void via_cmd_slave_handler(uint8_t m2s_size, const void* m2s_buffer, uint8_t s2m_size, void* s2m_buffer);
-#endif
