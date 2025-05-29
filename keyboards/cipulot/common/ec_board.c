@@ -53,7 +53,7 @@ void eeconfig_init_kb(void) {
     for (int i = 0; i < 4; i++) {
         eeprom_ec_config.socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
         eeprom_ec_config.socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
-        eeprom_ec_config.socd_opposing_pairs[i].resolution = SOCD_CLEANER_LAST;
+        eeprom_ec_config.socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
         eeprom_ec_config.socd_opposing_pairs[i].held[0]    = false;
         eeprom_ec_config.socd_opposing_pairs[i].held[1]    = false;
     }
