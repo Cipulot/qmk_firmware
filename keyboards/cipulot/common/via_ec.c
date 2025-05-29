@@ -14,16 +14,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ec_switch_matrix.h"
+#include "socd_cleaner.h"
 #include "action.h"
 #include "print.h"
 #include "via.h"
-
-#ifdef BETA
-#    include "beta_ec_switch_matrix.h"
-#    include "socd_cleaner.h.h"
-#else
-#    include "ec_switch_matrix.h"
-#endif
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
