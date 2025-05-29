@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ec_switch_matrix.h"
+#include "beta_ec_switch_matrix.h"
 #include "analog.h"
 #include "atomic_util.h"
 #include "math.h"

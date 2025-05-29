@@ -14,10 +14,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ec_switch_matrix.h"
 #include "action.h"
 #include "print.h"
 #include "via.h"
+
+#ifdef BETA
+#    include "beta_ec_switch_matrix.h"
+#else
+#    include "ec_switch_matrix.h"
+#endif
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
@@ -45,7 +50,23 @@ enum via_enums {
     id_bottoming_calibration = 8,
     id_noise_floor_calibration = 9,
     id_show_calibration_data = 10,
-    id_clear_bottoming_calibration_data = 11
+    id_clear_bottoming_calibration_data = 11,
+    id_socd_pair_1_enabled = 12,
+    id_socd_pair_1_key_1 = 13,
+    id_socd_pair_1_key_2 = 14,
+    id_socd_pair_1_mode = 15,
+    id_socd_pair_2_enabled = 16,
+    id_socd_pair_2_key_1 = 17,
+    id_socd_pair_2_key_2 = 18,
+    id_socd_pair_2_mode = 19,
+    id_socd_pair_3_enabled = 20,
+    id_socd_pair_3_key_1 = 21,
+    id_socd_pair_3_key_2 = 22,
+    id_socd_pair_3_mode = 23,
+    id_socd_pair_4_enabled = 24,
+    id_socd_pair_4_key_1 = 25,
+    id_socd_pair_4_key_2 = 26,
+    id_socd_pair_4_mode = 27,
     // clang-format on
 };
 

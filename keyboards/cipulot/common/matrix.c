@@ -14,8 +14,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ec_switch_matrix.h"
 #include "matrix.h"
+
+#ifdef BETA
+#    include "beta_ec_switch_matrix.h"
+#else
+#    include "ec_switch_matrix.h"
+#endif
 
 extern matrix_row_t raw_matrix[MATRIX_ROWS]; // raw values
 extern matrix_row_t matrix[MATRIX_ROWS];     // debounced values
