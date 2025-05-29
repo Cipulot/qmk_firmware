@@ -20,6 +20,7 @@
 
 #ifdef BETA
 #    include "beta_ec_switch_matrix.h"
+#    include "socd_cleaner.h.h"
 #else
 #    include "ec_switch_matrix.h"
 #endif
