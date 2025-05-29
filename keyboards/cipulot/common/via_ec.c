@@ -526,6 +526,7 @@ void ec_clear_bottoming_calibration_data(void) {
     uprintf("######################################\n");
 }
 
+// Handle the SOCD pairs configuration
 uint16_t socd_pair_handler(bool mode, uint8_t pair_idx, uint8_t field, uint16_t value) {
     if (mode) { // set
         switch (field) {

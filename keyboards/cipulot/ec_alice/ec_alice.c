@@ -17,6 +17,9 @@
 #include "ec_switch_matrix.h"
 #include "quantum.h"
 
+// Definition of SOCD shared instance
+socd_cleaner_t socd_opposing_pairs[4];
+
 void eeconfig_init_kb(void) {
     // Default values
     eeprom_ec_config.ind1.h       = 0;
@@ -52,6 +55,26 @@ void eeconfig_init_kb(void) {
             eeprom_ec_config.bottoming_reading[row][col] = DEFAULT_BOTTOMING_READING;
         }
     }
+
+    // Initialize the SOCD cleaner pairs
+    const struct {
+        uint16_t key1;
+        uint16_t key2;
+    } socd_pairs[] = {
+        {KC_A, KC_D},
+        {KC_W, KC_S},
+        {KC_Z, KC_X},
+        {KC_LEFT, KC_RIGHT},
+    };
+
+    for (int i = 0; i < 4; i++) {
+        eeprom_ec_config.socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
+        eeprom_ec_config.socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
+        eeprom_ec_config.socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
+        eeprom_ec_config.socd_opposing_pairs[i].held[0]    = false;
+        eeprom_ec_config.socd_opposing_pairs[i].held[1]    = false;
+    }
+
     // Write default value to EEPROM now
     eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
@@ -82,6 +105,8 @@ void keyboard_post_init_kb(void) {
             ec_config.rescaled_mode_1_release_offset[row][col]          = rescale(ec_config.mode_1_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
         }
     }
+
+    memcpy(socd_opposing_pairs, eeprom_ec_config.socd_opposing_pairs, sizeof(socd_opposing_pairs));
 
     // Set the RGB LEDs range that will be used for the effects
     rgblight_set_effect_range(3, 36);
