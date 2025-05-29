@@ -43,11 +43,12 @@ const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
 #endif
 
 #define AMUX_SEL_PINS_COUNT ARRAY_SIZE(amux_sel_pins)
-#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT)
+#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT))
+
 // Checks for the correctness of the configuration
 _Static_assert(ARRAY_SIZE(amux_en_pins) == AMUX_COUNT, "AMUX_EN_PINS doesn't have the minimum number of bits required to enable all the multiplexers available");
 // Check that number of select pins is enough to select all the channels
-_Static_assert(AMUX_SEL_PINS_COUNT == EXPECTED_AMUX_SEL_PINS_COUNT), "AMUX_SEL_PINS doesn't have the minimum number of bits required address all the channels");
+_Static_assert(AMUX_SEL_PINS_COUNT == EXPECTED_AMUX_SEL_PINS_COUNT, "AMUX_SEL_PINS doesn't have the minimum number of bits required address all the channels");
 // Check that number of elements in AMUX_COL_CHANNELS_SIZES is enough to specify the number of channels for all the multiplexers available
 _Static_assert(ARRAY_SIZE(amux_n_col_sizes) == AMUX_COUNT, "AMUX_COL_CHANNELS_SIZES doesn't have the minimum number of elements required to specify the number of channels for all the multiplexers available");
 
@@ -349,5 +350,11 @@ bool is_unused_position(uint8_t row, uint8_t col) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / 1023 + out_min;
+    return x * (out_max - out_min) / 1023 + out_min;
+}
+
+uint8_t *pIndicators = (uint8_t *)&eeprom_ec_config;
+
+indicator_config *get_indicator_p(int index) {
+    return (indicator_config *)(pIndicators + index * sizeof(indicator_config));
 }

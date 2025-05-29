@@ -21,6 +21,7 @@
 #include "matrix.h"
 #include "eeconfig.h"
 #include "util.h"
+#include "socd_cleaner.h"
 
 typedef struct _indicator_config_t {
     uint8_t h;
@@ -40,6 +41,7 @@ typedef struct PACKED {
     uint8_t          mode_1_actuation_offset;                     // offset for key press in mode 1 (1-255)
     uint8_t          mode_1_release_offset;                       // offset for key release in mode 1 (1-255)
     uint16_t         bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    socd_cleaner_t   socd_opposing_pairs[4];                      // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
@@ -68,8 +70,11 @@ extern eeprom_ec_config_t eeprom_ec_config;
 
 extern ec_config_t ec_config;
 
+extern socd_cleaner_t socd_opposing_pairs[4];
+
 void init_row(void);
 void init_amux(void);
+void disable_unused_row(uint8_t row);
 void select_amux_channel(uint8_t channel, uint8_t col);
 void disable_unused_amux(uint8_t channel);
 void discharge_capacitor(void);
