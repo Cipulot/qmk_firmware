@@ -353,7 +353,7 @@ uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
     return x * (out_max - out_min) / 1023 + out_min;
 }
 
-uint8_t *pIndicators = (uint8_t *)&eeprom_ec_config;
+static uint8_t *pIndicators = (uint8_t *)&eeprom_ec_config;
 
 indicator_config *get_indicator_p(int index) {
     return (indicator_config *)(pIndicators + index * sizeof(indicator_config));

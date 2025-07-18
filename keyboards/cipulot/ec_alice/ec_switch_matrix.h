@@ -96,6 +96,6 @@ bool     indicators_callback(void);
 bool is_unused_position(uint8_t row, uint8_t col);
 #endif
 
-uint8_t *pIndicators;
+extern uint8_t *pIndicators;
 
 indicator_config *get_indicator_p(int index);

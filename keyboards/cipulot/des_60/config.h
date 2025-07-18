@@ -61,7 +61,7 @@
 
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 129
+#define EECONFIG_KB_DATA_SIZE 149
 
 /*
 #define L_MASK 0x08
