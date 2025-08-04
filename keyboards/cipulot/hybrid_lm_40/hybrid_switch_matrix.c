@@ -228,7 +228,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 disable_unused_row(row);
                 sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
 
-                if (sw_value[row][adjusted_col] > ec_config.rescaled_mode_0_actuation_threshold[row][adjusted_col]) {
+                if (ec_config.switch_type && (sw_value[row][adjusted_col] > 1000)) {
                     if (keypress_count < 4) {
                         keypresses[keypress_count++] = (KeyCoord){row, adjusted_col};
                     }
