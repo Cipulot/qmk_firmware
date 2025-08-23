@@ -2,6 +2,7 @@ CUSTOM_MATRIX = lite
 ANALOG_DRIVER_REQUIRED = yes
 SERIAL_DRIVER = usart
 SRC += matrix.c hybrid_switch_matrix.c
+QUANTUM_PAINTER_DRIVERS += sh1106_i2c
 
 MCUFLAGS += -march=armv7e-m \
             -mcpu=cortex-m4 \

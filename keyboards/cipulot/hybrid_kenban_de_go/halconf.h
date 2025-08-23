@@ -19,7 +19,7 @@
 #define HAL_USE_ADC TRUE
 #define HAL_USE_SERIAL TRUE
 
-#ifdef OLED_ENABLE
+#ifdef QUANTUM_PAINTER_ENABLE
 #    undef HAL_USE_I2C
 #    define HAL_USE_I2C TRUE
 #endif

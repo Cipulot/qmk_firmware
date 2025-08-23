@@ -29,7 +29,7 @@
         "extrakey": true,
         "mousekey": true,
         "nkro": true,
-        "oled": true
+        "quantum_painter": true
     },
     "processor": "STM32F411",
     "qmk": {
