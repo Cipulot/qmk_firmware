@@ -29,7 +29,8 @@
         "extrakey": true,
         "mousekey": true,
         "nkro": true,
-        "quantum_painter": true
+        "quantum_painter": true,
+        "wpm": true
     },
     "processor": "STM32F411",
     "qmk": {

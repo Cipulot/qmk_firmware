@@ -1,1 +1,4 @@
-SRC += graphics/kenban_de_go.qgf.c graphics/cipulot.qgf.c
+SRC += graphics/display.c
+SRC += graphics/splash_kenban_de_go.qgf.c
+SRC += graphics/splash_cipulot.qgf.c
+SRC += graphics/densha.qgf.c

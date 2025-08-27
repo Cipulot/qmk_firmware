@@ -17,25 +17,10 @@
 #include "hybrid_switch_matrix.h"
 #include "keyboard.h"
 #include "quantum.h"
+#include "graphics/display.h"
 
 // Definition of SOCD shared instance
 socd_cleaner_t socd_opposing_pairs[4];
-
-#ifdef QUANTUM_PAINTER_ENABLE
-#    include "qp.h"
-#    include "qp_sh1106.h"
-#    include "graphics/kenban_de_go.qgf.h"
-#    include "graphics/cipulot.qgf.h"
-
-static painter_device_t       oled;
-static painter_image_handle_t my_image;
-
-__attribute__((weak)) void ui_init(void) {
-    oled = qp_sh1106_make_i2c_device(128, 64, OLED_DISPLAY_ADDRESS);
-    qp_init(oled, QP_ROTATION_0);
-    qp_clear(oled);
-}
-#endif // QUANTUM_PAINTER_ENABLE
 
 void eeconfig_init_kb(void) {
     // Default values
@@ -106,12 +91,15 @@ void keyboard_post_init_kb(void) {
 
     memcpy(socd_opposing_pairs, eeprom_ec_config.socd_opposing_pairs, sizeof(socd_opposing_pairs));
 
-#ifdef QUANTUM_PAINTER_ENABLE
-    ui_init();
-    my_image = qp_load_image_mem(gfx_cipulot);
-    if (my_image != NULL) {
-        qp_drawimage(oled, (128 - my_image->width), (64 - my_image->height), my_image);
-    }
-#endif // QUANTUM_PAINTER_ENABLE
+    display_init_kb();
+
     keyboard_post_init_user();
+}
+
+bool shutdown_kb(bool jump_to_bootloader) {
+    if (!shutdown_user(jump_to_bootloader)) {
+        return false;
+    }
+    // DFU OLED Message
+    return true;
 }
