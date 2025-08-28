@@ -69,6 +69,7 @@ void eeconfig_init_kb(void) {
 
 // On Keyboard startup
 void keyboard_post_init_kb(void) {
+    debug_enable=true;
     // Read custom menu variables from memory
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
@@ -97,6 +98,11 @@ void keyboard_post_init_kb(void) {
 
 #ifdef SPLIT_KEYBOARD
     transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+    transaction_register_rpc(RPC_ID_KB_EEPROM_SYNC, kb_eeprom_cmd_slave_handler);
+
+    if (is_keyboard_master()) {
+        transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_ec_config_t), &eeprom_ec_config);
+    }
 #endif
 
     display_init_kb();
@@ -111,3 +117,14 @@ bool shutdown_kb(bool jump_to_bootloader) {
     // DFU OLED Message
     return true;
 }
+
+#ifdef SPLIT_KEYBOARD
+void kb_eeprom_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
+    if (m2s_size == sizeof(eeprom_ec_config_t)) {
+        memcpy(&eeprom_ec_config, m2s_buffer, sizeof(eeprom_ec_config_t));
+        eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
+    } else {
+        uprintf("Unexpected response in slave handler of EEPROM sync\n");
+    }
+}
+#endif
