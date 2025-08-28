@@ -2,7 +2,7 @@
     "manufacturer": "Cipulot",
     "keyboard_name": "Hybrid Kenban de Go!",
     "maintainer": "Cipulot",
-    "board": "BLACKPILL_STM32_F411",
+
     "bootloader": "stm32-dfu",
     "build": {
         "lto": true
@@ -41,6 +41,10 @@
     },
     "split": {
         "enabled": true,
+        "serial": {
+            "driver": "usart",
+            "pin": "A9"
+        },
         "encoder": {
             "right": {
                 "rotary": [
@@ -53,8 +57,11 @@
             "pin": "B12"
         },
         "transport": {
+            "protocol": "serial",
             "sync": {
-                "matrix_state": true
+                "oled": true,
+                "indicators": true,
+                "wpm": true
             },
             "watchdog": true
         }

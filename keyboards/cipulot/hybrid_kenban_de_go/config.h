@@ -37,10 +37,6 @@
 
 #define EECONFIG_KB_DATA_SIZE 142
 
-// Split keyboard configuration
-#define SERIAL_USART_DRIVER SD1
-#define SERIAL_USART_TX_PIN A9 // USART1 TX pin
-
 // OLED configuration
 #ifdef QUANTUM_PAINTER_ENABLE
 #    define OLED_DISPLAY_ADDRESS 0x3C
@@ -49,3 +45,4 @@
 #endif
 
 #define SPLIT_TRANSACTION_IDS_KB RPC_ID_VIA_CMD
+#define DEBUG_MATRIX_SCAN_RATE

@@ -24,7 +24,7 @@
 painter_device_t              kenban_de_go_display;
 static deferred_token         display_task_token;
 static painter_image_handle_t splash_image;
-static painter_image_handle_t densha_animation;
+//static painter_image_handle_t densha_animation;
 
 uint32_t display_task_callback(uint32_t trigger_time, void *cb_arg) {
     display_task_kb();
@@ -62,18 +62,18 @@ void display_task_kb(void) {
     if (!display_task_user()) {
         return;
     }
-    static bool first_draw = true;
+    //static bool first_draw = true;
     // static uint32_t last_wpm               = UINT32_MAX;
     // static uint32_t last_scan_rate         = 0;
     // static uint32_t last_key_pressed_count = UINT32_MAX;
 
-    if (first_draw) {
-        qp_clear(kenban_de_go_display);
-        densha_animation = qp_load_image_mem(gfx_densha);
-        qp_animate(kenban_de_go_display, (128 - densha_animation->width), (64 - densha_animation->height), densha_animation);
+    //if (first_draw) {
+     //   qp_clear(kenban_de_go_display);
+     //   densha_animation = qp_load_image_mem(gfx_densha);
+      //  qp_animate(kenban_de_go_display, (128 - densha_animation->width), (64 - densha_animation->height), densha_animation);
 
-        first_draw = false;
-    }
+       // first_draw = false;
+   // }
 
     // char buffer[64] = {0};
     /*

@@ -84,3 +84,7 @@ uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 #ifdef UNUSED_POSITIONS_LIST
 bool is_unused_position(uint8_t row, uint8_t col);
 #endif
+
+#ifdef SPLIT_KEYBOARD
+void via_cmd_slave_handler(uint8_t m2s_size, const void* m2s_buffer, uint8_t s2m_size, void* s2m_buffer);
+#endif

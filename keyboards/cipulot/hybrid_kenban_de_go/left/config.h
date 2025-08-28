@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define MATRIX_ROW_PINS {B15, B14, B13, A1, B15, B14, B13, A1}
+#define MATRIX_ROW_PINS {B15, B14, B13, A1, C13, C13, C13, C13}
 
 #define AMUX_COUNT 1
 #define AMUX_MAX_COLS_COUNT 7

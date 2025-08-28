@@ -19,6 +19,10 @@
 #include "quantum.h"
 #include "graphics/display.h"
 
+#ifdef SPLIT_KEYBOARD
+#    include "transactions.h"
+#endif
+
 // Definition of SOCD shared instance
 socd_cleaner_t socd_opposing_pairs[4];
 
@@ -90,6 +94,10 @@ void keyboard_post_init_kb(void) {
     }
 
     memcpy(socd_opposing_pairs, eeprom_ec_config.socd_opposing_pairs, sizeof(socd_opposing_pairs));
+
+#ifdef SPLIT_KEYBOARD
+    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+#endif
 
     display_init_kb();
 
