@@ -2,7 +2,6 @@
     "manufacturer": "Cipulot",
     "keyboard_name": "Hybrid Kenban de Go!",
     "maintainer": "Cipulot",
-
     "bootloader": "stm32-dfu",
     "build": {
         "lto": true
@@ -18,8 +17,8 @@
     },
     "encoder": {
         "rotary": [
-            {"pin_a": "A10", "pin_b": "A8"},
-            {"pin_a": "A10", "pin_b": "A15"}
+            {"pin_a": "A8", "pin_b": "A10"},
+            {"pin_a": "A15", "pin_b": "A10"}
         ]
     },
     "features": {
@@ -41,26 +40,26 @@
     },
     "split": {
         "enabled": true,
-        "serial": {
-            "driver": "usart",
-            "pin": "A9"
-        },
         "encoder": {
             "right": {
                 "rotary": [
-                    {"pin_a": "A8", "pin_b": "B15"},
-                    {"pin_a": "A8", "pin_b": "B13"}
+                    {"pin_a": "B15", "pin_b": "A8"},
+                    {"pin_a": "B13", "pin_b": "A8"}
                 ]
             }
         },
         "handedness": {
             "pin": "B12"
         },
+        "serial": {
+            "driver": "usart",
+            "pin": "A9"
+        },
         "transport": {
             "protocol": "serial",
             "sync": {
-                "oled": true,
                 "indicators": true,
+                "oled": true,
                 "wpm": true
             },
             "watchdog": true
