@@ -20,7 +20,7 @@
 
 extern painter_device_t      kenban_de_go_display;
 
-bool display_init_kb(void);
+void display_init_kb(void);
 bool display_init_user(void);
 void display_task_kb(void);
 bool display_task_user(void);

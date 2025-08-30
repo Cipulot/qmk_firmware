@@ -31,13 +31,15 @@ uint32_t display_task_callback(uint32_t trigger_time, void *cb_arg) {
     return 100;
 }
 
-bool display_init_kb(void) {
+void display_init_kb(void) {
     if (!display_init_user()) {
-        return false;
+        return;
     }
 
     kenban_de_go_display = qp_sh1106_make_i2c_device(128, 64, OLED_DISPLAY_ADDRESS);
-    qp_init(kenban_de_go_display, QP_ROTATION_0);
+    if (!qp_init(kenban_de_go_display, QP_ROTATION_0)) {
+        kenban_de_go_display = NULL;
+    }
     qp_clear(kenban_de_go_display);
 
     if (is_keyboard_left()) {
@@ -49,9 +51,10 @@ bool display_init_kb(void) {
         qp_drawimage(kenban_de_go_display, (128 - splash_image->width), (64 - splash_image->height), splash_image);
         qp_flush(kenban_de_go_display);
         qp_close_image(splash_image);
-        display_task_token = defer_exec(2000, display_task_callback, NULL);
+        if (kenban_de_go_display != NULL) {
+            display_task_token = defer_exec(2000, display_task_callback, NULL);
+        }
     }
-    return true;
 }
 
 __attribute__((weak)) bool display_init_user(void) {
