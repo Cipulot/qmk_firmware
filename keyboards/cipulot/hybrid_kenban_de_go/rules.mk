@@ -5,12 +5,12 @@ VIA_INSECURE = yes
 
 SRC += matrix.c
 SRC += hybrid_switch_matrix.c
-ifeq ($(strip $(QUANTUM_PAINTER_ENABLE)), yes)
-    SRC += graphics/display.c
-    SRC += graphics/splash_kenban_de_go.qgf.c
-    SRC += graphics/splash_cipulot.qgf.c
-    SRC += graphics/densha.qgf.c
-endif
+
+SRC += graphics/display.c
+SRC += graphics/splash_kenban_de_go.qgf.c
+SRC += graphics/splash_cipulot.qgf.c
+SRC += graphics/densha.qgf.c
+
 
 MCUFLAGS += -march=armv7e-m \
             -mcpu=cortex-m4 \
