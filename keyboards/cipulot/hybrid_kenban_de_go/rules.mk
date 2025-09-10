@@ -1,13 +1,16 @@
 CUSTOM_MATRIX = lite
 ANALOG_DRIVER_REQUIRED = yes
 QUANTUM_PAINTER_DRIVERS += sh1106_i2c
+VIA_INSECURE = yes
 
 SRC += matrix.c
 SRC += hybrid_switch_matrix.c
-SRC += graphics/display.c
-SRC += graphics/splash_kenban_de_go.qgf.c
-SRC += graphics/splash_cipulot.qgf.c
-SRC += graphics/densha.qgf.c
+ifeq ($(strip $(QUANTUM_PAINTER_ENABLE)), yes)
+    SRC += graphics/display.c
+    SRC += graphics/splash_kenban_de_go.qgf.c
+    SRC += graphics/splash_cipulot.qgf.c
+    SRC += graphics/densha.qgf.c
+endif
 
 MCUFLAGS += -march=armv7e-m \
             -mcpu=cortex-m4 \
