@@ -16,6 +16,8 @@
 
 #pragma once
 
+//#define UNUSED_POSITIONS_LIST { {6, 0}, {7, 0}, {7, 1}, {7, 2}, {7, 6} }
+
 #define MATRIX_ROW_PINS {A10, B14, B3, B0, C13, C13, C13, C13}
 
 #define AMUX_COUNT 1
