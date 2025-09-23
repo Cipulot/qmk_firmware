@@ -110,6 +110,7 @@ void keyboard_post_init_kb(void) {
 
     // Set the RGB LEDs range that will be used for the effects
     rgblight_set_effect_range(3, 1);
+
     // Call the indicator callback to set the indicator color
     indicators_callback();
 
@@ -166,7 +167,7 @@ bool func_switch(uint8_t func) {
 
 bool set_indicator(indicator_config indicator) {
     if (!indicator.enabled) return false;
-    return func_switch(indicator.func & 0x0F) | func_switch((indicator.func & 0xF0) >> 4);
+    return func_switch(indicator.func & 0x0F);
 }
 
 bool indicators_callback(void) {
