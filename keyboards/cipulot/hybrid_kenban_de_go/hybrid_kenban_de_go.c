@@ -103,7 +103,9 @@ void keyboard_post_init_kb(void) {
     transaction_register_rpc(RPC_ID_KB_EEPROM_SYNC, kb_eeprom_cmd_slave_handler);
 
     if (is_keyboard_master()) {
-        // transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_ec_config_t), &eeprom_ec_config);
+        // Sync EEPROM config to slave side
+        // This is done to ensure both sides have the same configuration in the case one side (either the master or the slave) is connected by itself and has its own EEPROM data.
+        transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_ec_config_t), &eeprom_ec_config);
     }
 #endif
 
