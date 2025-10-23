@@ -21,7 +21,6 @@
         "nkro": true,
         "rgblight": true
     },
-    "board": "BLACKPILL_STM32_F411",
     "processor": "STM32F411",
     "qmk": {
         "locking": {
