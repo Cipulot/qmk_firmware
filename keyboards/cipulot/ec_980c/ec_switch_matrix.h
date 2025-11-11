@@ -21,6 +21,7 @@
 #include "matrix.h"
 #include "eeconfig.h"
 #include "util.h"
+#include "socd_cleaner.h"
 
 typedef struct _indicator_config_t {
     uint8_t h;
@@ -33,13 +34,13 @@ typedef struct PACKED {
     indicator_config num;
     indicator_config caps;
     indicator_config scroll;
-    uint8_t          actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
-    uint16_t         mode_0_actuation_threshold;                  // threshold for key press in mode 0
-    uint16_t         mode_0_release_threshold;                    // threshold for key release in mode 0
-    uint16_t         mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
-    uint8_t          mode_1_actuation_offset;                     // offset for key press in mode 1 and 2 (1-255)
-    uint8_t          mode_1_release_offset;                       // offset for key release in mode 1 and 2 (1-255)
-    uint16_t         bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    uint8_t          actuation_mode;                 // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
+    uint16_t         mode_0_actuation_threshold;     // threshold for key press in mode 0
+    uint16_t         mode_0_release_threshold;       // threshold for key release in mode 0
+    uint16_t         mode_1_initial_deadzone_offset; // threshold for key press in mode 1
+    uint8_t          mode_1_actuation_offset;        // offset for key press in mode 1 and 2 (1-255)
+    uint8_t          mode_1_release_offset;          // offset for key release in mode 1 and 2 (1-255)
+    socd_cleaner_t   socd_opposing_pairs[4];         // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
@@ -68,6 +69,8 @@ extern eeprom_ec_config_t eeprom_ec_config;
 
 extern ec_config_t ec_config;
 
+extern socd_cleaner_t socd_opposing_pairs[4];
+
 void init_row(void);
 void init_amux(void);
 void select_amux_channel(uint8_t channel, uint8_t col);
@@ -79,7 +82,7 @@ int      ec_init(void);
 void     ec_noise_floor(void);
 bool     ec_matrix_scan(matrix_row_t current_matrix[]);
 uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col);
-bool     ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value);
+bool     ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value);
 void     ec_print_matrix(void);
 
 uint16_t rescale(uint16_t x, uint16_t in_min, uint16_t in_max, uint16_t out_min, uint16_t out_max);

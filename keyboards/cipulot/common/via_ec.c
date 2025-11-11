@@ -20,6 +20,7 @@
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
+#    include "usb_descriptor.h"
 #endif
 
 #ifdef VIA_ENABLE

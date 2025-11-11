@@ -63,7 +63,7 @@
 
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 174
+#define EECONFIG_KB_DATA_SIZE 194
 
 // Indicators
 // PWM driver with direct memory access (DMA) support

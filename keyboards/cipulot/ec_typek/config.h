@@ -61,8 +61,6 @@
 
 #define DISCHARGE_TIME 10
 
-// #define DEBUG_MATRIX_SCAN_RATE
-
 #define EECONFIG_KB_DATA_SIZE 171
 
 // RGB & Indicators
