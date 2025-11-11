@@ -8,6 +8,36 @@ QMK_PY = Path("lib") / "python"
 
 sys.path.append(str(QMK_PY))
 
+# Compatibility shim: some environments (or shadowed 'ast' modules) may not expose
+# the legacy AST node classes like `ast.Num`. The `qmk` package (lib/python/qmk/math.py)
+# still uses `ast.Num`, so ensure a minimal-compatible `ast.Num` exists before
+# importing any qmk modules.
+import ast
+if not hasattr(ast, "Num"):
+    # On newer Python ASTs numeric literals are `ast.Constant` instances.
+    # Two things are needed so older code using `ast.Num` keeps working:
+    # 1) `isinstance(node, ast.Num)` must succeed for Constant nodes, and
+    # 2) `node.n` must return the numeric value (older code expects `.n`).
+    # Achieve this by adding a `.n` property to ast.Constant and aliasing
+    # ast.Num to ast.Constant.
+    try:
+        # add property 'n' to ast.Constant so attribute access works
+        if not hasattr(ast.Constant, "n"):
+            ast.Constant.n = property(lambda self: self.value)
+    except Exception:
+        # If ast.Constant is not assignable (shouldn't happen), fall back to
+        # creating a thin subclass and aliasing (less ideal because existing
+        # Constant instances won't be instances of the subclass).
+        class _CompatNum(ast.Constant):
+            @property
+            def n(self):
+                return self.value
+
+        ast.Num = _CompatNum
+    else:
+        # Make ast.Num point to ast.Constant so isinstance checks succeed.
+        ast.Num = ast.Constant
+
 CWD = os.getcwd()
 USERSPACE_VIA = os.path.abspath(os.path.join(CWD, "..", "qmk_userspace_via"))
 
