@@ -24,6 +24,7 @@
         "rgblight": true
     },
     "processor": "STM32F411",
+    "board": "BLACKPILL_STM32_F411",
     "qmk": {
         "locking": {
             "enabled": true,
