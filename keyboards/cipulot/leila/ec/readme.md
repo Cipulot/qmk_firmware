@@ -10,11 +10,11 @@ Full Size Electrostatic Capacitive PCB, with multi-layout support.
 
 Make example for this keyboard (after setting up your build environment):
 
-    make cipulot/ec_leila:default
+    make cipulot/leila/ec:default
 
 Flashing example for this keyboard:
 
-    make cipulot/ec_leila:default:flash
+    make cipulot/leila/ec:default:flash
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
