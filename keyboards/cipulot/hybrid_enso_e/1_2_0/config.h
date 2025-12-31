@@ -32,7 +32,7 @@
 
 #define AMUX_COL_CHANNELS_SIZES {14, 8}
 
-#define AMUX_0_COL_CHANNELS {13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 0, 1, 3, 2}
+#define AMUX_0_COL_CHANNELS {13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 0, 2, 1}
 #define AMUX_1_COL_CHANNELS {9, 5, 6, 10, 11, 12, 3, 4}
 
 #define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS, AMUX_1_COL_CHANNELS
