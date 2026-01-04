@@ -45,29 +45,33 @@ static void rescale_all_keys(void) {
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) { \
         for (uint8_t c = 0; c < MATRIX_COLS; c++) { \
             ec_config.key_state[r][c].field = (val); \
-            rescale_key_thresholds(&ec_config.key_state[r][c]); \
         } \
     } \
 } while(0)
 
 static void set_all_keys_mode_0_actuation(uint16_t value) {
     APPLY_TO_ALL_KEYS(apc_actuation_threshold, value);
+    rescale_all_keys();
 }
 
 static void set_all_keys_mode_0_release(uint16_t value) {
     APPLY_TO_ALL_KEYS(apc_release_threshold, value);
+    rescale_all_keys();
 }
 
 static void set_all_keys_rt_deadzone(uint16_t value) {
     APPLY_TO_ALL_KEYS(rt_initial_deadzone_offset, value);
+    rescale_all_keys();
 }
 
 static void set_all_keys_rt_actuation_offset(uint8_t value) {
     APPLY_TO_ALL_KEYS(rt_actuation_offset, value);
+    rescale_all_keys();
 }
 
 static void set_all_keys_rt_release_offset(uint8_t value) {
     APPLY_TO_ALL_KEYS(rt_release_offset, value);
+    rescale_all_keys();
 }
 
 // Declaring enums for VIA config menu
@@ -180,11 +184,7 @@ void via_config_set_value(uint8_t *data) {
         case id_noise_floor_calibration: {
             if (value_data[0] == 0) {
                 ec_noise_floor();
-                ec_rescale_values(0);
-                ec_rescale_values(1);
-                ec_rescale_values(2);
-                ec_rescale_values(3);
-                ec_rescale_values(4);
+                rescale_all_keys();
                 uprintf("#############################\n");
                 uprintf("# Noise floor data acquired #\n");
                 uprintf("#############################\n");

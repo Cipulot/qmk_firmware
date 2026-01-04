@@ -170,6 +170,12 @@ int ec_init(void) {
 
 // Get the noise floor
 void ec_noise_floor(void) {
+    uint8_t col_offsets[AMUX_COUNT];
+    col_offsets[0] = 0;
+    for (uint8_t i = 1; i < AMUX_COUNT; i++) {
+        col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
+    }
+
     // Initialize the noise floor
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -182,10 +188,7 @@ void ec_noise_floor(void) {
         for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
             disable_unused_amux(amux);
             for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
-                uint8_t sum = 0;
-                for (uint8_t i = 0; i < (amux > 0 ? amux : 0); i++)
-                    sum += amux_n_col_sizes[i];
-                uint8_t adjusted_col = col + sum;
+                uint8_t adjusted_col = col + col_offsets[amux];
                 for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 #ifdef UNUSED_POSITIONS_LIST
                     if (is_unused_position(row, adjusted_col)) continue;
@@ -212,13 +215,16 @@ void ec_noise_floor(void) {
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool updated = false;
 
+    uint8_t col_offsets[AMUX_COUNT];
+    col_offsets[0] = 0;
+    for (uint8_t i = 1; i < AMUX_COUNT; i++) {
+        col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
+    }
+
     for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
         disable_unused_amux(amux);
         for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
-            uint8_t sum = 0;
-            for (uint8_t i = 0; i < (amux > 0 ? amux : 0); i++)
-                sum += amux_n_col_sizes[i];
-            uint8_t adjusted_col = col + sum;
+            uint8_t adjusted_col = col + col_offsets[amux];
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 #ifdef UNUSED_POSITIONS_LIST
                 if (is_unused_position(row, adjusted_col)) continue;
@@ -271,12 +277,13 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 
 // Update press/release state of key
 bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
-    key_state_t *key     = &ec_config.key_state[row][col];
-    bool         pressed = (*current_row >> col) & 1;
+    key_state_t *key      = &ec_config.key_state[row][col];
+    matrix_row_t row_bits = *current_row;
+    bool         pressed  = (row_bits >> col) & 1;
+    bool         changed  = false;
 
     // Real Time Noise Floor Calibration
     if (sw_value + NOISE_FLOOR_THRESHOLD < key->noise_floor) {
-        uprintf("Noise Floor Change: %d, %d, %d\n", row, col, sw_value);
         key->noise_floor = sw_value;
         rescale_key_thresholds(key);
     }
@@ -286,14 +293,12 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
     // Normal board-wide APC (or per-key override)
     if (actuation_mode == 0) {
         if (pressed && sw_value < key->rescaled_apc_release_threshold) {
-            *current_row &= ~(1 << col);
-            uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
-            return true;
+            row_bits &= ~(1 << col);
+            changed = true;
         }
         if ((!pressed) && sw_value > key->rescaled_apc_actuation_threshold) {
-            *current_row |= (1 << col);
-            uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
-            return true;
+            row_bits |= (1 << col);
+            changed = true;
         }
     }
     // Rapid Trigger
@@ -305,14 +310,12 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                 // Is the key still moving down?
                 if (sw_value > key->extremum) {
                     key->extremum = sw_value;
-                    uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
                 }
                 // Has key moved up enough to be released?
                 else if (sw_value < key->extremum - key->rescaled_rt_release_offset) {
                     key->extremum = sw_value;
-                    *current_row &= ~(1 << col);
-                    uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
-                    return true;
+                    row_bits &= ~(1 << col);
+                    changed = true;
                 }
             }
             // Key is not pressed while in active zone
@@ -324,9 +327,8 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                 // Has key moved down enough to be pressed?
                 else if (sw_value > key->extremum + key->rescaled_rt_actuation_offset) {
                     key->extremum = sw_value;
-                    *current_row |= (1 << col);
-                    uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
-                    return true;
+                    row_bits |= (1 << col);
+                    changed = true;
                 }
             }
         }
@@ -335,12 +337,15 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
             // Check to avoid key being stuck in pressed state near the active zone threshold
             if (sw_value < key->extremum) {
                 key->extremum = sw_value;
-                *current_row &= ~(1 << col);
-                return true;
+                row_bits &= ~(1 << col);
+                changed = true;
             }
         }
     }
-    return false;
+    if (changed) {
+        *current_row = row_bits;
+    }
+    return changed;
 }
 
 // Print the matrix values
