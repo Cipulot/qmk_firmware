@@ -202,13 +202,7 @@ void ec_noise_floor(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             key_state_t *key         = &ec_config.key_state[row][col];
-            if (row == 0 && col == 0) {
-                uprintf("DEBUG: key[0][0] accumulated before div: %d\n", key->noise_floor);
-            }
             key->noise_floor        /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
-            if (row == 0 && col == 0) {
-                uprintf("DEBUG: key[0][0] noise_floor after div: %d\n", key->noise_floor);
-            }
             rescale_key_thresholds(key);
         }
     }
