@@ -23,34 +23,42 @@
 #include "util.h"
 #include "socd_cleaner.h"
 
+typedef struct {
+    uint8_t  base_actuation_mode;                // 0: APC, 1: Rapid Trigger
+    uint16_t base_mode_0_actuation_threshold;    // per-key base thresholds
+    uint16_t base_mode_0_release_threshold;
+    uint16_t base_mode_1_initial_deadzone_offset;
+    uint8_t  base_mode_1_actuation_offset;
+    uint8_t  base_mode_1_release_offset;
+
+    uint16_t noise_floor;                        // detected noise floor
+    uint16_t extremum;                           // rapid-trigger extremum tracker
+    bool     bottoming_calibration_starter;      // pending bottoming sample flag
+    uint16_t bottoming_reading;                  // per-key bottoming reading
+
+    uint16_t rescaled_mode_0_actuation_threshold;     // rescaled thresholds using noise_floor/bottoming
+    uint16_t rescaled_mode_0_release_threshold;
+    uint16_t rescaled_mode_1_initial_deadzone_offset;
+    uint8_t  rescaled_mode_1_actuation_offset;
+    uint8_t  rescaled_mode_1_release_offset;
+} key_state_t;
+
 typedef struct PACKED {
-    uint8_t        actuation_mode;                              // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point, 2: Rapid trigger from resting point
-    uint16_t       mode_0_actuation_threshold;                  // threshold for key press in mode 0
-    uint16_t       mode_0_release_threshold;                    // threshold for key release in mode 0
-    uint16_t       mode_1_initial_deadzone_offset;              // threshold for key press in mode 1
-    uint8_t        mode_1_actuation_offset;                     // offset for key press in mode 1 (1-255)
-    uint8_t        mode_1_release_offset;                       // offset for key release in mode 1 (1-255)
-    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
-    socd_cleaner_t socd_opposing_pairs[4];                      // SOCD
+    uint8_t        actuation_mode;                                               // board-wide default mode
+    uint8_t        base_actuation_mode[MATRIX_ROWS][MATRIX_COLS];                // per-key base mode (0xFF inherit)
+    uint16_t       base_mode_0_actuation_threshold[MATRIX_ROWS][MATRIX_COLS];    // per-key base thresholds
+    uint16_t       base_mode_0_release_threshold[MATRIX_ROWS][MATRIX_COLS];
+    uint16_t       base_mode_1_initial_deadzone_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint8_t        base_mode_1_actuation_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint8_t        base_mode_1_release_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS];                  // per-key bottoming reading
+    socd_cleaner_t socd_opposing_pairs[4];                                       // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
-    uint8_t  actuation_mode;                                                    // 0: normal board-wide APC, 1: Rapid trigger from specific board-wide actuation point (it can be very near that baseline noise and be "full travel")
-    uint16_t mode_0_actuation_threshold;                                        // threshold for key press in mode 0
-    uint16_t mode_0_release_threshold;                                          // threshold for key release in mode 0
-    uint16_t mode_1_initial_deadzone_offset;                                    // threshold for key press in mode 1 (initial deadzone)
-    uint8_t  mode_1_actuation_offset;                                           // offset for key press in
-    uint8_t  mode_1_release_offset;                                             // offset for key release in
-    uint16_t rescaled_mode_0_actuation_threshold[MATRIX_ROWS][MATRIX_COLS];     // threshold for key press in mode 0 rescaled to actual scale
-    uint16_t rescaled_mode_0_release_threshold[MATRIX_ROWS][MATRIX_COLS];       // threshold for key release in mode 0 rescaled to actual scale
-    uint16_t rescaled_mode_1_initial_deadzone_offset[MATRIX_ROWS][MATRIX_COLS]; // threshold for key press in mode 1 (initial deadzone) rescaled to actual scale
-    uint8_t  rescaled_mode_1_actuation_offset[MATRIX_ROWS][MATRIX_COLS];        // offset for key press in mode 1 rescaled to actual scale
-    uint8_t  rescaled_mode_1_release_offset[MATRIX_ROWS][MATRIX_COLS];          // offset for key release in mode 1 rescaled to actual scale
-    uint16_t extremum[MATRIX_ROWS][MATRIX_COLS];                                // extremum values for mode 1
-    uint16_t noise_floor[MATRIX_ROWS][MATRIX_COLS];                             // noise floor detected during startup
-    bool     bottoming_calibration;                                             // calibration mode for bottoming out values (true: calibration mode, false: normal mode)
-    bool     bottoming_calibration_starter[MATRIX_ROWS][MATRIX_COLS];           // calibration mode for bottoming out values (true: calibration mode, false: normal mode)
-    uint16_t bottoming_reading[MATRIX_ROWS][MATRIX_COLS];                       // bottoming reading
+    uint8_t     actuation_mode;   // board-wide default mode
+    bool        bottoming_calibration;
+    key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
 } ec_config_t;
 
 // Check if the size of the reserved persistent memory is the same as the size of struct eeprom_ec_config_t
@@ -76,6 +84,7 @@ bool     ec_matrix_scan(matrix_row_t current_matrix[]);
 uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col);
 bool     ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value);
 void     ec_print_matrix(void);
+void     rescale_key_thresholds(key_state_t *key);
 
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 

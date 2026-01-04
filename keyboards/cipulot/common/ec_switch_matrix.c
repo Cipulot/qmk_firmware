@@ -56,6 +56,19 @@ static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 
 static adc_mux adcMux;
 
+static inline uint8_t resolved_actuation_mode(const key_state_t *key) {
+    return key->base_actuation_mode == 0xFF ? ec_config.actuation_mode : key->base_actuation_mode;
+}
+
+void rescale_key_thresholds(key_state_t *key) {
+    key->rescaled_mode_0_actuation_threshold     = rescale(key->base_mode_0_actuation_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_mode_0_release_threshold       = rescale(key->base_mode_0_release_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_mode_1_initial_deadzone_offset = rescale(key->base_mode_1_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_mode_1_actuation_offset        = rescale(key->base_mode_1_actuation_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_mode_1_release_offset          = rescale(key->base_mode_1_release_offset, key->noise_floor, key->bottoming_reading);
+    key->extremum                                = key->noise_floor;
+}
+
 // Initialize the row pins
 void init_row(void) {
     // Set all row pins as output and low
@@ -160,7 +173,7 @@ void ec_noise_floor(void) {
     // Initialize the noise floor
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.noise_floor[row][col] = 0;
+            ec_config.key_state[row][col].noise_floor = 0;
         }
     }
 
@@ -178,17 +191,25 @@ void ec_noise_floor(void) {
                     if (is_unused_position(row, adjusted_col)) continue;
 #endif
                     disable_unused_row(row);
-                    ec_config.noise_floor[row][adjusted_col] += ec_readkey_raw(amux, row, col);
+                    ec_config.key_state[row][adjusted_col].noise_floor += ec_readkey_raw(amux, row, col);
                 }
             }
         }
-        wait_ms(5);
+        wait_ms(10);
     }
 
-    // Average the noise floor
+    // Average the noise floor and rescale per-key thresholds
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.noise_floor[row][col] /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            key_state_t *key         = &ec_config.key_state[row][col];
+            if (row == 0 && col == 0) {
+                uprintf("DEBUG: key[0][0] accumulated before div: %d\n", key->noise_floor);
+            }
+            key->noise_floor        /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            if (row == 0 && col == 0) {
+                uprintf("DEBUG: key[0][0] noise_floor after div: %d\n", key->noise_floor);
+            }
+            rescale_key_thresholds(key);
         }
     }
 }
@@ -210,13 +231,14 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 #endif
                 disable_unused_row(row);
                 sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
+                key_state_t *key            = &ec_config.key_state[row][adjusted_col];
 
                 if (ec_config.bottoming_calibration) {
-                    if (ec_config.bottoming_calibration_starter[row][adjusted_col]) {
-                        ec_config.bottoming_reading[row][adjusted_col]             = sw_value[row][adjusted_col];
-                        ec_config.bottoming_calibration_starter[row][adjusted_col] = false;
-                    } else if (sw_value[row][adjusted_col] > ec_config.bottoming_reading[row][adjusted_col]) {
-                        ec_config.bottoming_reading[row][adjusted_col] = sw_value[row][adjusted_col];
+                    if (key->bottoming_calibration_starter) {
+                        key->bottoming_reading             = sw_value[row][adjusted_col];
+                        key->bottoming_calibration_starter = false;
+                    } else if (sw_value[row][adjusted_col] > key->bottoming_reading) {
+                        key->bottoming_reading = sw_value[row][adjusted_col];
                     }
                 } else {
                     updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
@@ -241,6 +263,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     ATOMIC_BLOCK_FORCEON {
         // Set the row pin to high state and have capacitor charge
         charge_capacitor(row);
+        wait_us(CHARGE_TIME);
         // Read the ADC value
         sw_value = adc_read(adcMux);
     }
@@ -254,44 +277,45 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 
 // Update press/release state of key
 bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
-    bool current_state = (*current_row >> col) & 1;
+    key_state_t *key     = &ec_config.key_state[row][col];
+    bool         pressed = (*current_row >> col) & 1;
 
     // Real Time Noise Floor Calibration
-    if (sw_value < (ec_config.noise_floor[row][col] - NOISE_FLOOR_THRESHOLD)) {
+    if (sw_value + NOISE_FLOOR_THRESHOLD < key->noise_floor) {
         uprintf("Noise Floor Change: %d, %d, %d\n", row, col, sw_value);
-        ec_config.noise_floor[row][col]                             = sw_value;
-        ec_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_0_release_threshold[row][col]       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+        key->noise_floor = sw_value;
+        rescale_key_thresholds(key);
     }
 
-    // Normal board-wide APC
-    if (ec_config.actuation_mode == 0) {
-        if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold[row][col]) {
+    uint8_t actuation_mode = resolved_actuation_mode(key);
+
+    // Normal board-wide APC (or per-key override)
+    if (actuation_mode == 0) {
+        if (pressed && sw_value < key->rescaled_mode_0_release_threshold) {
             *current_row &= ~(1 << col);
             uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold[row][col]) {
+        if ((!pressed) && sw_value > key->rescaled_mode_0_actuation_threshold) {
             *current_row |= (1 << col);
             uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
             return true;
         }
     }
     // Rapid Trigger
-    else if (ec_config.actuation_mode == 1) {
+    else {
         // Is key in active zone?
-        if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset[row][col]) {
+        if (sw_value > key->rescaled_mode_1_initial_deadzone_offset) {
             // Is key pressed while in active zone?
-            if (current_state) {
+            if (pressed) {
                 // Is the key still moving down?
-                if (sw_value > ec_config.extremum[row][col]) {
-                    ec_config.extremum[row][col] = sw_value;
+                if (sw_value > key->extremum) {
+                    key->extremum = sw_value;
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
                 }
                 // Has key moved up enough to be released?
-                else if (sw_value < ec_config.extremum[row][col] - ec_config.rescaled_mode_1_release_offset[row][col]) {
-                    ec_config.extremum[row][col] = sw_value;
+                else if (sw_value < key->extremum - key->rescaled_mode_1_release_offset) {
+                    key->extremum = sw_value;
                     *current_row &= ~(1 << col);
                     uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
                     return true;
@@ -300,12 +324,12 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
             // Key is not pressed while in active zone
             else {
                 // Is the key still moving up?
-                if (sw_value < ec_config.extremum[row][col]) {
-                    ec_config.extremum[row][col] = sw_value;
+                if (sw_value < key->extremum) {
+                    key->extremum = sw_value;
                 }
                 // Has key moved down enough to be pressed?
-                else if (sw_value > ec_config.extremum[row][col] + ec_config.rescaled_mode_1_actuation_offset[row][col]) {
-                    ec_config.extremum[row][col] = sw_value;
+                else if (sw_value > key->extremum + key->rescaled_mode_1_actuation_offset) {
+                    key->extremum = sw_value;
                     *current_row |= (1 << col);
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
                     return true;
@@ -315,8 +339,8 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
         // Key is not in active zone
         else {
             // Check to avoid key being stuck in pressed state near the active zone threshold
-            if (sw_value < ec_config.extremum[row][col]) {
-                ec_config.extremum[row][col] = sw_value;
+            if (sw_value < key->extremum) {
+                key->extremum = sw_value;
                 *current_row &= ~(1 << col);
                 return true;
             }
