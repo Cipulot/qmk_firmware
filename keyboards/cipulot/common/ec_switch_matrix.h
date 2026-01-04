@@ -24,39 +24,39 @@
 #include "socd_cleaner.h"
 
 typedef struct {
-    uint8_t  base_actuation_mode;                // 0: APC, 1: Rapid Trigger
-    uint16_t base_mode_0_actuation_threshold;    // per-key base thresholds
-    uint16_t base_mode_0_release_threshold;
-    uint16_t base_mode_1_initial_deadzone_offset;
-    uint8_t  base_mode_1_actuation_offset;
-    uint8_t  base_mode_1_release_offset;
+    uint8_t  actuation_mode;          // 0: APC, 1: Rapid Trigger
+    uint16_t apc_actuation_threshold; // per-key thresholds
+    uint16_t apc_release_threshold;
+    uint16_t rt_initial_deadzone_offset;
+    uint8_t  rt_actuation_offset;
+    uint8_t  rt_release_offset;
 
-    uint16_t noise_floor;                        // detected noise floor
-    uint16_t extremum;                           // rapid-trigger extremum tracker
-    bool     bottoming_calibration_starter;      // pending bottoming sample flag
-    uint16_t bottoming_reading;                  // per-key bottoming reading
+    uint16_t noise_floor;                   // detected noise floor
+    uint16_t extremum;                      // rapid-trigger extremum tracker
+    bool     bottoming_calibration_starter; // pending bottoming sample flag
+    uint16_t bottoming_reading;             // per-key bottoming reading
 
-    uint16_t rescaled_mode_0_actuation_threshold;     // rescaled thresholds using noise_floor/bottoming
-    uint16_t rescaled_mode_0_release_threshold;
-    uint16_t rescaled_mode_1_initial_deadzone_offset;
-    uint8_t  rescaled_mode_1_actuation_offset;
-    uint8_t  rescaled_mode_1_release_offset;
+    uint16_t rescaled_apc_actuation_threshold; // rescaled thresholds using noise_floor/bottoming
+    uint16_t rescaled_apc_release_threshold;
+    uint16_t rescaled_rt_initial_deadzone_offset;
+    uint8_t  rescaled_rt_actuation_offset;
+    uint8_t  rescaled_rt_release_offset;
 } key_state_t;
 
 typedef struct PACKED {
-    uint8_t        actuation_mode;                                               // board-wide default mode
-    uint8_t        base_actuation_mode[MATRIX_ROWS][MATRIX_COLS];                // per-key base mode (0xFF inherit)
-    uint16_t       base_mode_0_actuation_threshold[MATRIX_ROWS][MATRIX_COLS];    // per-key base thresholds
-    uint16_t       base_mode_0_release_threshold[MATRIX_ROWS][MATRIX_COLS];
-    uint16_t       base_mode_1_initial_deadzone_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint8_t        base_mode_1_actuation_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint8_t        base_mode_1_release_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS];                  // per-key bottoming reading
-    socd_cleaner_t socd_opposing_pairs[4];                                       // SOCD
+    uint8_t        actuation_mode;                                         // board-wide default mode
+    uint8_t        base_actuation_mode[MATRIX_ROWS][MATRIX_COLS];          // per-key base mode (0xFF inherit)
+    uint16_t       base_apc_actuation_threshold[MATRIX_ROWS][MATRIX_COLS]; // per-key base thresholds
+    uint16_t       base_apc_release_threshold[MATRIX_ROWS][MATRIX_COLS];
+    uint16_t       base_rt_initial_deadzone_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint8_t        base_rt_actuation_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint8_t        base_rt_release_offset[MATRIX_ROWS][MATRIX_COLS];
+    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // per-key bottoming reading
+    socd_cleaner_t socd_opposing_pairs[4];                      // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
-    uint8_t     actuation_mode;   // board-wide default mode
+    uint8_t     actuation_mode; // board-wide default mode
     bool        bottoming_calibration;
     key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
 } ec_config_t;

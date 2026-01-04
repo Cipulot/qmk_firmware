@@ -57,15 +57,15 @@ static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 static adc_mux adcMux;
 
 static inline uint8_t resolved_actuation_mode(const key_state_t *key) {
-    return key->base_actuation_mode == 0xFF ? ec_config.actuation_mode : key->base_actuation_mode;
+    return key->actuation_mode == 0xFF ? ec_config.actuation_mode : key->actuation_mode;
 }
 
 void rescale_key_thresholds(key_state_t *key) {
-    key->rescaled_mode_0_actuation_threshold     = rescale(key->base_mode_0_actuation_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_mode_0_release_threshold       = rescale(key->base_mode_0_release_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_mode_1_initial_deadzone_offset = rescale(key->base_mode_1_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_mode_1_actuation_offset        = rescale(key->base_mode_1_actuation_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_mode_1_release_offset          = rescale(key->base_mode_1_release_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_actuation_threshold     = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_release_threshold       = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
     key->extremum                                = key->noise_floor;
 }
 
@@ -285,12 +285,12 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
 
     // Normal board-wide APC (or per-key override)
     if (actuation_mode == 0) {
-        if (pressed && sw_value < key->rescaled_mode_0_release_threshold) {
+        if (pressed && sw_value < key->rescaled_apc_release_threshold) {
             *current_row &= ~(1 << col);
             uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
             return true;
         }
-        if ((!pressed) && sw_value > key->rescaled_mode_0_actuation_threshold) {
+        if ((!pressed) && sw_value > key->rescaled_apc_actuation_threshold) {
             *current_row |= (1 << col);
             uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
             return true;
@@ -299,7 +299,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
     // Rapid Trigger
     else {
         // Is key in active zone?
-        if (sw_value > key->rescaled_mode_1_initial_deadzone_offset) {
+        if (sw_value > key->rescaled_rt_initial_deadzone_offset) {
             // Is key pressed while in active zone?
             if (pressed) {
                 // Is the key still moving down?
@@ -308,7 +308,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
                 }
                 // Has key moved up enough to be released?
-                else if (sw_value < key->extremum - key->rescaled_mode_1_release_offset) {
+                else if (sw_value < key->extremum - key->rescaled_rt_release_offset) {
                     key->extremum = sw_value;
                     *current_row &= ~(1 << col);
                     uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
@@ -322,7 +322,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                     key->extremum = sw_value;
                 }
                 // Has key moved down enough to be pressed?
-                else if (sw_value > key->extremum + key->rescaled_mode_1_actuation_offset) {
+                else if (sw_value > key->extremum + key->rescaled_rt_actuation_offset) {
                     key->extremum = sw_value;
                     *current_row |= (1 << col);
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);

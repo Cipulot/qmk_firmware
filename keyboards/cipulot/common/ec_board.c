@@ -33,11 +33,11 @@ void eeconfig_init_kb(void) {
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.base_mode_0_actuation_threshold[row][col]    = DEFAULT_MODE_0_ACTUATION_LEVEL;
-            eeprom_ec_config.base_mode_0_release_threshold[row][col]      = DEFAULT_MODE_0_RELEASE_LEVEL;
-            eeprom_ec_config.base_mode_1_initial_deadzone_offset[row][col] = DEFAULT_MODE_1_INITIAL_DEADZONE_OFFSET;
-            eeprom_ec_config.base_mode_1_actuation_offset[row][col]       = DEFAULT_MODE_1_ACTUATION_OFFSET;
-            eeprom_ec_config.base_mode_1_release_offset[row][col]         = DEFAULT_MODE_1_RELEASE_OFFSET;
+            eeprom_ec_config.base_apc_actuation_threshold[row][col]    = DEFAULT_MODE_0_ACTUATION_LEVEL;
+            eeprom_ec_config.base_apc_release_threshold[row][col]      = DEFAULT_MODE_0_RELEASE_LEVEL;
+            eeprom_ec_config.base_rt_initial_deadzone_offset[row][col] = DEFAULT_rt_INITIAL_DEADZONE_OFFSET;
+            eeprom_ec_config.base_rt_actuation_offset[row][col]       = DEFAULT_rt_ACTUATION_OFFSET;
+            eeprom_ec_config.base_rt_release_offset[row][col]         = DEFAULT_rt_RELEASE_OFFSET;
             eeprom_ec_config.bottoming_reading[row][col]                  = DEFAULT_BOTTOMING_READING;
         }
     }
@@ -79,12 +79,12 @@ void keyboard_post_init_kb(void) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             key_state_t *key = &ec_config.key_state[row][col];
             // Copy base configuration from EEPROM
-            key->base_actuation_mode             = eeprom_ec_config.base_actuation_mode[row][col];
-            key->base_mode_0_actuation_threshold = eeprom_ec_config.base_mode_0_actuation_threshold[row][col];
-            key->base_mode_0_release_threshold   = eeprom_ec_config.base_mode_0_release_threshold[row][col];
-            key->base_mode_1_initial_deadzone_offset = eeprom_ec_config.base_mode_1_initial_deadzone_offset[row][col];
-            key->base_mode_1_actuation_offset        = eeprom_ec_config.base_mode_1_actuation_offset[row][col];
-            key->base_mode_1_release_offset          = eeprom_ec_config.base_mode_1_release_offset[row][col];
+            key->actuation_mode             = eeprom_ec_config.base_actuation_mode[row][col];
+            key->apc_actuation_threshold = eeprom_ec_config.base_apc_actuation_threshold[row][col];
+            key->apc_release_threshold   = eeprom_ec_config.base_apc_release_threshold[row][col];
+            key->rt_initial_deadzone_offset = eeprom_ec_config.base_rt_initial_deadzone_offset[row][col];
+            key->rt_actuation_offset        = eeprom_ec_config.base_rt_actuation_offset[row][col];
+            key->rt_release_offset          = eeprom_ec_config.base_rt_release_offset[row][col];
             key->bottoming_reading                   = eeprom_ec_config.bottoming_reading[row][col];
             // Initialize runtime values (noise_floor already set by ec_noise_floor())
             key->bottoming_calibration_starter  = true;

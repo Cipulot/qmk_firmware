@@ -51,35 +51,35 @@ static void rescale_all_keys(void) {
 } while(0)
 
 static void set_all_keys_mode_0_actuation(uint16_t value) {
-    APPLY_TO_ALL_KEYS(base_mode_0_actuation_threshold, value);
+    APPLY_TO_ALL_KEYS(apc_actuation_threshold, value);
 }
 
 static void set_all_keys_mode_0_release(uint16_t value) {
-    APPLY_TO_ALL_KEYS(base_mode_0_release_threshold, value);
+    APPLY_TO_ALL_KEYS(apc_release_threshold, value);
 }
 
-static void set_all_keys_mode_1_deadzone(uint16_t value) {
-    APPLY_TO_ALL_KEYS(base_mode_1_initial_deadzone_offset, value);
+static void set_all_keys_rt_deadzone(uint16_t value) {
+    APPLY_TO_ALL_KEYS(rt_initial_deadzone_offset, value);
 }
 
-static void set_all_keys_mode_1_actuation_offset(uint8_t value) {
-    APPLY_TO_ALL_KEYS(base_mode_1_actuation_offset, value);
+static void set_all_keys_rt_actuation_offset(uint8_t value) {
+    APPLY_TO_ALL_KEYS(rt_actuation_offset, value);
 }
 
-static void set_all_keys_mode_1_release_offset(uint8_t value) {
-    APPLY_TO_ALL_KEYS(base_mode_1_release_offset, value);
+static void set_all_keys_rt_release_offset(uint8_t value) {
+    APPLY_TO_ALL_KEYS(rt_release_offset, value);
 }
 
 // Declaring enums for VIA config menu
 enum via_enums {
     // clang-format off
     id_actuation_mode = 1,
-    id_mode_0_actuation_threshold = 2,
-    id_mode_0_release_threshold = 3,
+    id_apc_actuation_threshold = 2,
+    id_apc_release_threshold = 3,
     id_save_threshold_data = 4,
-    id_mode_1_initial_deadzone_offset = 5,
-    id_mode_1_actuation_offset = 6,
-    id_mode_1_release_offset = 7,
+    id_rt_initial_deadzone_offset = 5,
+    id_rt_actuation_offset = 6,
+    id_rt_release_offset = 7,
     id_bottoming_calibration = 8,
     id_noise_floor_calibration = 9,
     id_show_calibration_data = 10,
@@ -131,31 +131,31 @@ void via_config_set_value(uint8_t *data) {
             eeconfig_update_kb_datablock_field(eeprom_ec_config, actuation_mode);
             break;
         }
-        case id_mode_0_actuation_threshold: {
+        case id_apc_actuation_threshold: {
             uint16_t val = value_data[1] | (value_data[0] << 8);
             set_all_keys_mode_0_actuation(val);
             uprintf("APC Mode Actuation Threshold: %d\n", val);
             break;
         }
-        case id_mode_0_release_threshold: {
+        case id_apc_release_threshold: {
             uint16_t val = value_data[1] | (value_data[0] << 8);
             set_all_keys_mode_0_release(val);
             uprintf("APC Mode Release Threshold: %d\n", val);
             break;
         }
-        case id_mode_1_initial_deadzone_offset: {
+        case id_rt_initial_deadzone_offset: {
             uint16_t val = value_data[1] | (value_data[0] << 8);
-            set_all_keys_mode_1_deadzone(val);
+            set_all_keys_rt_deadzone(val);
             uprintf("Rapid Trigger Mode Initial Deadzone Offset: %d\n", val);
             break;
         }
-        case id_mode_1_actuation_offset: {
-            set_all_keys_mode_1_actuation_offset(value_data[0]);
+        case id_rt_actuation_offset: {
+            set_all_keys_rt_actuation_offset(value_data[0]);
             uprintf("Rapid Trigger Mode Actuation Offset: %d\n", value_data[0]);
             break;
         }
-        case id_mode_1_release_offset: {
-            set_all_keys_mode_1_release_offset(value_data[0]);
+        case id_rt_release_offset: {
+            set_all_keys_rt_release_offset(value_data[0]);
             uprintf("Rapid Trigger Mode Release Offset: %d\n", value_data[0]);
             break;
         }
@@ -269,27 +269,27 @@ void via_config_get_value(uint8_t *data) {
             value_data[0] = eeprom_ec_config.actuation_mode;
             break;
         }
-        case id_mode_0_actuation_threshold: {
-            value_data[0] = eeprom_ec_config.base_mode_0_actuation_threshold[0][0] >> 8;
-            value_data[1] = eeprom_ec_config.base_mode_0_actuation_threshold[0][0] & 0xFF;
+        case id_apc_actuation_threshold: {
+            value_data[0] = eeprom_ec_config.base_apc_actuation_threshold[0][0] >> 8;
+            value_data[1] = eeprom_ec_config.base_apc_actuation_threshold[0][0] & 0xFF;
             break;
         }
-        case id_mode_0_release_threshold: {
-            value_data[0] = eeprom_ec_config.base_mode_0_release_threshold[0][0] >> 8;
-            value_data[1] = eeprom_ec_config.base_mode_0_release_threshold[0][0] & 0xFF;
+        case id_apc_release_threshold: {
+            value_data[0] = eeprom_ec_config.base_apc_release_threshold[0][0] >> 8;
+            value_data[1] = eeprom_ec_config.base_apc_release_threshold[0][0] & 0xFF;
             break;
         }
-        case id_mode_1_initial_deadzone_offset: {
-            value_data[0] = eeprom_ec_config.base_mode_1_initial_deadzone_offset[0][0] >> 8;
-            value_data[1] = eeprom_ec_config.base_mode_1_initial_deadzone_offset[0][0] & 0xFF;
+        case id_rt_initial_deadzone_offset: {
+            value_data[0] = eeprom_ec_config.base_rt_initial_deadzone_offset[0][0] >> 8;
+            value_data[1] = eeprom_ec_config.base_rt_initial_deadzone_offset[0][0] & 0xFF;
             break;
         }
-        case id_mode_1_actuation_offset: {
-            value_data[0] = eeprom_ec_config.base_mode_1_actuation_offset[0][0];
+        case id_rt_actuation_offset: {
+            value_data[0] = eeprom_ec_config.base_rt_actuation_offset[0][0];
             break;
         }
-        case id_mode_1_release_offset: {
-            value_data[0] = eeprom_ec_config.base_mode_1_release_offset[0][0];
+        case id_rt_release_offset: {
+            value_data[0] = eeprom_ec_config.base_rt_release_offset[0][0];
             break;
         }
         case id_socd_pair_1_enabled:
@@ -408,8 +408,8 @@ void ec_save_threshold_data(uint8_t option) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             for (uint8_t col = 0; col < MATRIX_COLS; col++) {
                 key_state_t *key                                              = &ec_config.key_state[row][col];
-                eeprom_ec_config.base_mode_0_actuation_threshold[row][col]    = key->base_mode_0_actuation_threshold;
-                eeprom_ec_config.base_mode_0_release_threshold[row][col]      = key->base_mode_0_release_threshold;
+                eeprom_ec_config.base_apc_actuation_threshold[row][col]    = key->apc_actuation_threshold;
+                eeprom_ec_config.base_apc_release_threshold[row][col]      = key->apc_release_threshold;
             }
         }
     }
@@ -418,9 +418,9 @@ void ec_save_threshold_data(uint8_t option) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             for (uint8_t col = 0; col < MATRIX_COLS; col++) {
                 key_state_t *key                                                  = &ec_config.key_state[row][col];
-                eeprom_ec_config.base_mode_1_initial_deadzone_offset[row][col] = key->base_mode_1_initial_deadzone_offset;
-                eeprom_ec_config.base_mode_1_actuation_offset[row][col]        = key->base_mode_1_actuation_offset;
-                eeprom_ec_config.base_mode_1_release_offset[row][col]          = key->base_mode_1_release_offset;
+                eeprom_ec_config.base_rt_initial_deadzone_offset[row][col] = key->rt_initial_deadzone_offset;
+                eeprom_ec_config.base_rt_actuation_offset[row][col]        = key->rt_actuation_offset;
+                eeprom_ec_config.base_rt_release_offset[row][col]          = key->rt_release_offset;
             }
         }
     }
@@ -479,34 +479,34 @@ void ec_show_calibration_data(void) {
     uprintf("\n######################################\n");
     uprintf("# Rescaled APC Mode Actuation Points #\n");
     uprintf("######################################\n");
-    uprintf("Original APC Mode Actuation Point: %4d\n", eeprom_ec_config.base_mode_0_actuation_threshold[0][0]);
+    uprintf("Original APC Mode Actuation Point: %4d\n", eeprom_ec_config.base_apc_actuation_threshold[0][0]);
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS - 1; col++) {
-            uprintf("%4d,", ec_config.key_state[row][col].rescaled_mode_0_actuation_threshold);
+            uprintf("%4d,", ec_config.key_state[row][col].rescaled_apc_actuation_threshold);
         }
-        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_mode_0_actuation_threshold);
+        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_apc_actuation_threshold);
     }
 
     uprintf("\n######################################\n");
     uprintf("# Rescaled APC Mode Release Points   #\n");
     uprintf("######################################\n");
-    uprintf("Original APC Mode Release Point: %4d\n", eeprom_ec_config.base_mode_0_release_threshold[0][0]);
+    uprintf("Original APC Mode Release Point: %4d\n", eeprom_ec_config.base_apc_release_threshold[0][0]);
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS - 1; col++) {
-            uprintf("%4d,", ec_config.key_state[row][col].rescaled_mode_0_release_threshold);
+            uprintf("%4d,", ec_config.key_state[row][col].rescaled_apc_release_threshold);
         }
-        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_mode_0_release_threshold);
+        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_apc_release_threshold);
     }
 
     uprintf("\n#######################################################\n");
     uprintf("# Rescaled Rapid Trigger Mode Initial Deadzone Offset #\n");
     uprintf("#######################################################\n");
-    uprintf("Original Rapid Trigger Mode Initial Deadzone Offset: %4d\n", eeprom_ec_config.base_mode_1_initial_deadzone_offset[0][0]);
+    uprintf("Original Rapid Trigger Mode Initial Deadzone Offset: %4d\n", eeprom_ec_config.base_rt_initial_deadzone_offset[0][0]);
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS - 1; col++) {
-            uprintf("%4d,", ec_config.key_state[row][col].rescaled_mode_1_initial_deadzone_offset);
+            uprintf("%4d,", ec_config.key_state[row][col].rescaled_rt_initial_deadzone_offset);
         }
-        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_mode_1_initial_deadzone_offset);
+        uprintf("%4d\n", ec_config.key_state[row][MATRIX_COLS - 1].rescaled_rt_initial_deadzone_offset);
     }
     print("\n");
 }
