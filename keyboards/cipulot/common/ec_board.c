@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2025 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,20 +25,17 @@
 socd_cleaner_t socd_opposing_pairs[4];
 
 void eeconfig_init_kb(void) {
-    // Default values
-    eeprom_ec_config.actuation_mode = DEFAULT_ACTUATION_MODE;
-
-    // Initialize per-key base actuation mode to inherit (0xFF)
-    memset(eeprom_ec_config.base_actuation_mode, 0xFF, sizeof(eeprom_ec_config.base_actuation_mode));
-
+    // Initialize all keys with default values
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.base_apc_actuation_threshold[row][col]    = DEFAULT_APC_ACTUATION_LEVEL;
-            eeprom_ec_config.base_apc_release_threshold[row][col]      = DEFAULT_APC_RELEASE_LEVEL;
-            eeprom_ec_config.base_rt_initial_deadzone_offset[row][col] = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
-            eeprom_ec_config.base_rt_actuation_offset[row][col]        = DEFAULT_RT_ACTUATION_OFFSET;
-            eeprom_ec_config.base_rt_release_offset[row][col]          = DEFAULT_RT_RELEASE_OFFSET;
-            eeprom_ec_config.bottoming_reading[row][col]               = DEFAULT_BOTTOMING_READING;
+            key_state_t *key                = &eeprom_ec_config.key_state[row][col];
+            key->actuation_mode             = DEFAULT_ACTUATION_MODE;
+            key->apc_actuation_threshold    = DEFAULT_APC_ACTUATION_LEVEL;
+            key->apc_release_threshold      = DEFAULT_APC_RELEASE_LEVEL;
+            key->rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+            key->rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+            key->rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
+            key->bottoming_reading          = DEFAULT_BOTTOMING_READING;
         }
     }
 
@@ -72,23 +69,19 @@ void keyboard_post_init_kb(void) {
     // Read custom menu variables from memory
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    // Set runtime values to EEPROM values
-    ec_config.actuation_mode        = eeprom_ec_config.actuation_mode;
     ec_config.bottoming_calibration = false;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            key_state_t *key = &ec_config.key_state[row][col];
-            // Copy base configuration from EEPROM
-            key->actuation_mode             = eeprom_ec_config.base_actuation_mode[row][col];
-            key->apc_actuation_threshold    = eeprom_ec_config.base_apc_actuation_threshold[row][col];
-            key->apc_release_threshold      = eeprom_ec_config.base_apc_release_threshold[row][col];
-            key->rt_initial_deadzone_offset = eeprom_ec_config.base_rt_initial_deadzone_offset[row][col];
-            key->rt_actuation_offset        = eeprom_ec_config.base_rt_actuation_offset[row][col];
-            key->rt_release_offset          = eeprom_ec_config.base_rt_release_offset[row][col];
-            key->bottoming_reading          = eeprom_ec_config.bottoming_reading[row][col];
-            // Initialize runtime values (noise_floor already set by ec_noise_floor())
-            key->bottoming_calibration_starter = true;
-            rescale_key_thresholds(key);
+            key_state_t *key_eeprom  = &eeprom_ec_config.key_state[row][col];
+            key_state_t *key_runtime = &ec_config.key_state[row][col];
+
+            // Copy from EEPROM to runtime
+            *key_runtime = *key_eeprom;
+
+            // Initialize runtime-only values (noise_floor already set by ec_noise_floor())
+            key_runtime->bottoming_calibration_starter = true;
+            rescale_key_thresholds(key_runtime);
         }
     }
 

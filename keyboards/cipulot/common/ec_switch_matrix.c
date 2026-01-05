@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2025 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,31 +43,18 @@ const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
 #endif
 
 #define AMUX_SEL_PINS_COUNT ARRAY_SIZE(amux_sel_pins)
-#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT)
+#define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT))
 
 // Checks for the correctness of the configuration
 _Static_assert(ARRAY_SIZE(amux_en_pins) == AMUX_COUNT, "AMUX_EN_PINS doesn't have the minimum number of bits required to enable all the multiplexers available");
 // Check that number of select pins is enough to select all the channels
-_Static_assert(AMUX_SEL_PINS_COUNT == EXPECTED_AMUX_SEL_PINS_COUNT), "AMUX_SEL_PINS doesn't have the minimum number of bits required address all the channels");
+_Static_assert(AMUX_SEL_PINS_COUNT == EXPECTED_AMUX_SEL_PINS_COUNT, "AMUX_SEL_PINS doesn't have the minimum number of bits required address all the channels");
 // Check that number of elements in AMUX_COL_CHANNELS_SIZES is enough to specify the number of channels for all the multiplexers available
 _Static_assert(ARRAY_SIZE(amux_n_col_sizes) == AMUX_COUNT, "AMUX_COL_CHANNELS_SIZES doesn't have the minimum number of elements required to specify the number of channels for all the multiplexers available");
 
 static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 
 static adc_mux adcMux;
-
-static inline uint8_t resolved_actuation_mode(const key_state_t *key) {
-    return key->actuation_mode == 0xFF ? ec_config.actuation_mode : key->actuation_mode;
-}
-
-void rescale_key_thresholds(key_state_t *key) {
-    key->rescaled_apc_actuation_threshold     = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_apc_release_threshold       = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
-    key->extremum                                = key->noise_floor;
-}
 
 // Initialize the row pins
 void init_row(void) {
@@ -122,6 +109,7 @@ void disable_unused_amux(uint8_t channel) {
         }
     }
 }
+
 // Discharge the peak hold capacitor
 void discharge_capacitor(void) {
 #ifdef OPEN_DRAIN_SUPPORT
@@ -204,8 +192,8 @@ void ec_noise_floor(void) {
     // Average the noise floor and rescale per-key thresholds
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            key_state_t *key         = &ec_config.key_state[row][col];
-            key->noise_floor        /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            key_state_t *key = &ec_config.key_state[row][col];
+            key->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
             rescale_key_thresholds(key);
         }
     }
@@ -275,8 +263,8 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     return sw_value;
 }
 
-// Update press/release state of key
-bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
+// Update press/release state of key (supports both EC and MX switches)
+bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
     key_state_t *key      = &ec_config.key_state[row][col];
     matrix_row_t row_bits = *current_row;
     bool         pressed  = (row_bits >> col) & 1;
@@ -288,10 +276,9 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
         rescale_key_thresholds(key);
     }
 
-    uint8_t actuation_mode = resolved_actuation_mode(key);
-
-    // Normal board-wide APC (or per-key override)
-    if (actuation_mode == 0) {
+    // EC switch handling
+    // Normal board-wide APC (mode 0)
+    if (key->actuation_mode == 0) {
         if (pressed && sw_value < key->rescaled_apc_release_threshold) {
             row_bits &= ~(1 << col);
             changed = true;
@@ -301,8 +288,8 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
             changed = true;
         }
     }
-    // Rapid Trigger
-    else {
+    // Rapid Trigger (mode 1)
+    else if (key->actuation_mode == 1) {
         // Is key in active zone?
         if (sw_value > key->rescaled_rt_initial_deadzone_offset) {
             // Is key pressed while in active zone?
@@ -342,10 +329,21 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
             }
         }
     }
+
     if (changed) {
         *current_row = row_bits;
     }
     return changed;
+}
+
+// Rescale per-key thresholds based on noise floor and bottoming reading
+void rescale_key_thresholds(key_state_t *key) {
+    key->rescaled_apc_actuation_threshold    = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_release_threshold      = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
+    key->extremum                            = key->noise_floor;
 }
 
 // Print the matrix values

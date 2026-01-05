@@ -1,4 +1,4 @@
-/* Copyright 2023 Cipulot
+/* Copyright 2025 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,12 @@
 #include "util.h"
 #include "socd_cleaner.h"
 
-typedef struct {
+// Per-key state structure for hybrid switches (EC/MX)
+typedef struct PACKED {
     uint8_t  actuation_mode;          // 0: APC, 1: Rapid Trigger
-    uint16_t apc_actuation_threshold; // per-key thresholds
+    uint16_t apc_actuation_threshold; // per-key thresholds for mode 0
     uint16_t apc_release_threshold;
-    uint16_t rt_initial_deadzone_offset;
+    uint16_t rt_initial_deadzone_offset; // per-key thresholds for mode 1
     uint8_t  rt_actuation_offset;
     uint8_t  rt_release_offset;
 
@@ -44,19 +45,13 @@ typedef struct {
 } key_state_t;
 
 typedef struct PACKED {
-    uint8_t        actuation_mode;                                         // board-wide default mode
-    uint8_t        base_actuation_mode[MATRIX_ROWS][MATRIX_COLS];          // per-key base mode (0xFF inherit)
-    uint16_t       base_apc_actuation_threshold[MATRIX_ROWS][MATRIX_COLS]; // per-key base thresholds
-    uint16_t       base_apc_release_threshold[MATRIX_ROWS][MATRIX_COLS];
-    uint16_t       base_rt_initial_deadzone_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint8_t        base_rt_actuation_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint8_t        base_rt_release_offset[MATRIX_ROWS][MATRIX_COLS];
-    uint16_t       bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // per-key bottoming reading
-    socd_cleaner_t socd_opposing_pairs[4];                      // SOCD
+    // Per-key persistent data (includes thresholds, calibration and actuation_mode)
+    key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
+
+    socd_cleaner_t socd_opposing_pairs[4]; // SOCD
 } eeprom_ec_config_t;
 
 typedef struct {
-    uint8_t     actuation_mode; // board-wide default mode
     bool        bottoming_calibration;
     key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
 } ec_config_t;
