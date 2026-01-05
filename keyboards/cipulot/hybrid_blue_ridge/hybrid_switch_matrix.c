@@ -56,16 +56,6 @@ static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 
 static adc_mux adcMux;
 
-// Rescale per-key thresholds based on noise floor and bottoming reading
-void rescale_key_thresholds(key_state_t *key) {
-    key->rescaled_apc_actuation_threshold     = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_apc_release_threshold       = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
-    key->extremum                                = key->noise_floor;
-}
-
 // Initialize the row pins
 void init_row(void) {
     // Set all row pins as output and low
@@ -139,7 +129,6 @@ void charge_capacitor(uint8_t row) {
 #endif
     gpio_write_pin_high(row_pins[row]);
 }
-
 
 // Initialize the peripherals pins
 int ec_init(void) {
@@ -309,10 +298,10 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 
 // Update press/release state of key (supports both EC and MX switches)
 bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
-    key_state_t *key         = &ec_config.key_state[row][col];
-    matrix_row_t row_bits    = *current_row;
-    bool         pressed     = (row_bits >> col) & 1;
-    bool         changed     = false;
+    key_state_t *key      = &ec_config.key_state[row][col];
+    matrix_row_t row_bits = *current_row;
+    bool         pressed  = (row_bits >> col) & 1;
+    bool         changed  = false;
 
     // Real Time Noise Floor Calibration
     if (sw_value + NOISE_FLOOR_THRESHOLD < key->noise_floor) {
@@ -391,6 +380,16 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
         *current_row = row_bits;
     }
     return changed;
+}
+
+// Rescale per-key thresholds based on noise floor and bottoming reading
+void rescale_key_thresholds(key_state_t *key) {
+    key->rescaled_apc_actuation_threshold    = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_release_threshold      = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
+    key->extremum                            = key->noise_floor;
 }
 
 // Print the matrix values
