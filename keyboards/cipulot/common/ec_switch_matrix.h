@@ -46,8 +46,7 @@ typedef struct PACKED {
 
 typedef struct PACKED {
     // Per-key persistent data (includes thresholds, calibration and actuation_mode)
-    key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
-
+    key_state_t    key_state[MATRIX_ROWS][MATRIX_COLS];
     socd_cleaner_t socd_opposing_pairs[4]; // SOCD
 } eeprom_ec_config_t;
 
