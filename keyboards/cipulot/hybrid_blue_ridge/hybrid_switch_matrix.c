@@ -56,6 +56,16 @@ static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 
 static adc_mux adcMux;
 
+// Rescale per-key thresholds based on noise floor and bottoming reading
+void rescale_key_thresholds(key_state_t *key) {
+    key->rescaled_apc_actuation_threshold     = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_release_threshold       = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
+    key->extremum                                = key->noise_floor;
+}
+
 // Initialize the row pins
 void init_row(void) {
     // Set all row pins as output and low
@@ -109,6 +119,7 @@ void disable_unused_amux(uint8_t channel) {
         }
     }
 }
+
 // Discharge the peak hold capacitor
 void discharge_capacitor(void) {
 #ifdef OPEN_DRAIN_SUPPORT
@@ -128,6 +139,7 @@ void charge_capacitor(uint8_t row) {
 #endif
     gpio_write_pin_high(row_pins[row]);
 }
+
 
 // Initialize the peripherals pins
 int ec_init(void) {
@@ -157,10 +169,16 @@ int ec_init(void) {
 
 // Get the noise floor
 void ec_noise_floor(void) {
+    uint8_t col_offsets[AMUX_COUNT];
+    col_offsets[0] = 0;
+    for (uint8_t i = 1; i < AMUX_COUNT; i++) {
+        col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
+    }
+
     // Initialize the noise floor
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.noise_floor[row][col] = 0;
+            ec_config.key_state[row][col].noise_floor = 0;
         }
     }
 
@@ -169,38 +187,37 @@ void ec_noise_floor(void) {
         for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
             disable_unused_amux(amux);
             for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
-                uint8_t sum = 0;
-                for (uint8_t i = 0; i < (amux > 0 ? amux : 0); i++)
-                    sum += amux_n_col_sizes[i];
-                uint8_t adjusted_col = col + sum;
+                uint8_t adjusted_col = col + col_offsets[amux];
                 for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 #ifdef UNUSED_POSITIONS_LIST
                     if (is_unused_position(row, adjusted_col)) continue;
 #endif
                     disable_unused_row(row);
-                    ec_config.noise_floor[row][adjusted_col] += ec_readkey_raw(amux, row, col);
+                    ec_config.key_state[row][adjusted_col].noise_floor += ec_readkey_raw(amux, row, col);
                 }
             }
         }
-        wait_ms(5);
+        wait_ms(10);
     }
 
-    // Average the noise floor
+    // Average the noise floor and rescale per-key thresholds
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.noise_floor[row][col] /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            key_state_t *key = &ec_config.key_state[row][col];
+            key->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            rescale_key_thresholds(key);
         }
     }
 }
 
-// Define a struct to hold key coordinates for easy comparison
+// Coordinate struct for ghost key detection
 typedef struct {
     uint8_t row;
     uint8_t col;
 } KeyCoord;
 
 // Check if four coordinates form a square
-bool forms_square(KeyCoord k1, KeyCoord k2, KeyCoord k3, KeyCoord k4) {
+static bool forms_square(KeyCoord k1, KeyCoord k2, KeyCoord k3, KeyCoord k4) {
     // Check that exactly two rows and two columns are present among the four keys
     bool row_check = (k1.row == k2.row && k3.row == k4.row && k1.row != k3.row) || (k1.row == k3.row && k2.row == k4.row && k1.row != k2.row) || (k1.row == k4.row && k2.row == k3.row && k1.row != k2.row);
 
@@ -208,38 +225,44 @@ bool forms_square(KeyCoord k1, KeyCoord k2, KeyCoord k3, KeyCoord k4) {
 
     return row_check && col_check;
 }
-// Scan matrix and check for ghost key patterns
+
+// Scan key values and update matrix state (with ghost key detection for MX switches)
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
     bool     updated = false;
     KeyCoord keypresses[4];      // Track up to four keypresses to detect squares
     int      keypress_count = 0; // Track count of keypresses in current scan cycle
 
+    uint8_t col_offsets[AMUX_COUNT];
+    col_offsets[0] = 0;
+    for (uint8_t i = 1; i < AMUX_COUNT; i++) {
+        col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
+    }
+
     for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
         disable_unused_amux(amux);
         for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
-            uint8_t sum = 0;
-            for (uint8_t i = 0; i < amux; i++)
-                sum += amux_n_col_sizes[i];
-            uint8_t adjusted_col = col + sum;
+            uint8_t adjusted_col = col + col_offsets[amux];
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
 #ifdef UNUSED_POSITIONS_LIST
                 if (is_unused_position(row, adjusted_col)) continue;
 #endif
                 disable_unused_row(row);
                 sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
+                key_state_t *key            = &ec_config.key_state[row][adjusted_col];
 
-                if (ec_config.switch_type && (sw_value[row][adjusted_col] > 1000)) {
+                // Track keypresses for ghost key detection (MX mode)
+                if (key->switch_type == 1 && (sw_value[row][adjusted_col] > 1000)) {
                     if (keypress_count < 4) {
                         keypresses[keypress_count++] = (KeyCoord){row, adjusted_col};
                     }
                 }
 
                 if (ec_config.bottoming_calibration) {
-                    if (ec_config.bottoming_calibration_starter[row][adjusted_col]) {
-                        ec_config.bottoming_reading[row][adjusted_col]             = sw_value[row][adjusted_col];
-                        ec_config.bottoming_calibration_starter[row][adjusted_col] = false;
-                    } else if (sw_value[row][adjusted_col] > ec_config.bottoming_reading[row][adjusted_col]) {
-                        ec_config.bottoming_reading[row][adjusted_col] = sw_value[row][adjusted_col];
+                    if (key->bottoming_calibration_starter) {
+                        key->bottoming_reading             = sw_value[row][adjusted_col];
+                        key->bottoming_calibration_starter = false;
+                    } else if (sw_value[row][adjusted_col] > key->bottoming_reading) {
+                        key->bottoming_reading = sw_value[row][adjusted_col];
                     }
                 } else {
                     updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
@@ -248,8 +271,8 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
         }
     }
 
-    // Check if a square pattern exists and deactivate the last key in the pattern
-    if (keypress_count == 4) {
+    // Check if a square pattern exists and deactivate the last key in the pattern (ghost key)
+    if (keypress_count == 4 && ec_config.key_state[0][0].switch_type == 1) {
         if (forms_square(keypresses[0], keypresses[1], keypresses[2], keypresses[3])) {
             KeyCoord ghost_key = keypresses[3];
             current_matrix[ghost_key.row] &= ~(1 << ghost_key.col); // Clear the ghost key in the matrix
@@ -272,6 +295,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     ATOMIC_BLOCK_FORCEON {
         // Set the row pin to high state and have capacitor charge
         charge_capacitor(row);
+        wait_us(CHARGE_TIME);
         // Read the ADC value
         sw_value = adc_read(adcMux);
     }
@@ -283,92 +307,90 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     return sw_value;
 }
 
-// Update press/release state of key
-bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
-    bool current_state = (*current_row >> col) & 1;
+// Update press/release state of key (supports both EC and MX switches)
+bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
+    key_state_t *key         = &ec_config.key_state[row][col];
+    matrix_row_t row_bits    = *current_row;
+    bool         pressed     = (row_bits >> col) & 1;
+    bool         changed     = false;
 
     // Real Time Noise Floor Calibration
-    if (sw_value < (ec_config.noise_floor[row][col] - NOISE_FLOOR_THRESHOLD)) {
-        uprintf("Noise Floor Change: %d, %d, %d\n", row, col, sw_value);
-        ec_config.noise_floor[row][col]                             = sw_value;
-        ec_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_0_release_threshold[row][col]       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+    if (sw_value + NOISE_FLOOR_THRESHOLD < key->noise_floor) {
+        key->noise_floor = sw_value;
+        rescale_key_thresholds(key);
     }
 
-    if (ec_config.switch_type == 1) {
-        // MX
-        if (current_state && sw_value < 950) {
-            *current_row &= ~(1 << col);
-            uprintf("MX Key released: %d, %d, %d\n", row, col, sw_value);
-            return true;
+    // MX switch handling
+    if (key->switch_type == 1) {
+        if (pressed && sw_value < 950) {
+            row_bits &= ~(1 << col);
+            changed = true;
         }
-        if ((!current_state) && sw_value > 1000) {
-            *current_row |= (1 << col);
-            uprintf("MX Key pressed: %d, %d, %d\n", row, col, sw_value);
-            return true;
+        if ((!pressed) && sw_value > 1000) {
+            row_bits |= (1 << col);
+            changed = true;
         }
-    } else if (ec_config.switch_type == 0) {
-        // EC
-        // Normal board-wide APC
-        if (ec_config.actuation_mode == 0) {
-            if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold[row][col]) {
-                *current_row &= ~(1 << col);
-                uprintf("EC Key released: %d, %d, %d\n", row, col, sw_value);
-                return true;
+    }
+    // EC switch handling
+    else if (key->switch_type == 0) {
+        // Normal board-wide APC (mode 0)
+        if (key->actuation_mode == 0) {
+            if (pressed && sw_value < key->rescaled_apc_release_threshold) {
+                row_bits &= ~(1 << col);
+                changed = true;
             }
-            if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold[row][col]) {
-                *current_row |= (1 << col);
-                uprintf("EC Key pressed: %d, %d, %d\n", row, col, sw_value);
-                return true;
+            if ((!pressed) && sw_value > key->rescaled_apc_actuation_threshold) {
+                row_bits |= (1 << col);
+                changed = true;
             }
         }
-        // Rapid Trigger
-        else if (ec_config.actuation_mode == 1) {
+        // Rapid Trigger (mode 1)
+        else if (key->actuation_mode == 1) {
             // Is key in active zone?
-            if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset[row][col]) {
+            if (sw_value > key->rescaled_rt_initial_deadzone_offset) {
                 // Is key pressed while in active zone?
-                if (current_state) {
+                if (pressed) {
                     // Is the key still moving down?
-                    if (sw_value > ec_config.extremum[row][col]) {
-                        ec_config.extremum[row][col] = sw_value;
-                        uprintf("EC Key pressed: %d, %d, %d\n", row, col, sw_value);
+                    if (sw_value > key->extremum) {
+                        key->extremum = sw_value;
                     }
                     // Has key moved up enough to be released?
-                    else if (sw_value < ec_config.extremum[row][col] - ec_config.rescaled_mode_1_release_offset[row][col]) {
-                        ec_config.extremum[row][col] = sw_value;
-                        *current_row &= ~(1 << col);
-                        uprintf("EC Key released: %d, %d, %d\n", row, col, sw_value);
-                        return true;
+                    else if (sw_value < key->extremum - key->rescaled_rt_release_offset) {
+                        key->extremum = sw_value;
+                        row_bits &= ~(1 << col);
+                        changed = true;
                     }
                 }
                 // Key is not pressed while in active zone
                 else {
                     // Is the key still moving up?
-                    if (sw_value < ec_config.extremum[row][col]) {
-                        ec_config.extremum[row][col] = sw_value;
+                    if (sw_value < key->extremum) {
+                        key->extremum = sw_value;
                     }
                     // Has key moved down enough to be pressed?
-                    else if (sw_value > ec_config.extremum[row][col] + ec_config.rescaled_mode_1_actuation_offset[row][col]) {
-                        ec_config.extremum[row][col] = sw_value;
-                        *current_row |= (1 << col);
-                        uprintf("EC Key pressed: %d, %d, %d\n", row, col, sw_value);
-                        return true;
+                    else if (sw_value > key->extremum + key->rescaled_rt_actuation_offset) {
+                        key->extremum = sw_value;
+                        row_bits |= (1 << col);
+                        changed = true;
                     }
                 }
             }
             // Key is not in active zone
             else {
                 // Check to avoid key being stuck in pressed state near the active zone threshold
-                if (sw_value < ec_config.extremum[row][col]) {
-                    ec_config.extremum[row][col] = sw_value;
-                    *current_row &= ~(1 << col);
-                    return true;
+                if (sw_value < key->extremum) {
+                    key->extremum = sw_value;
+                    row_bits &= ~(1 << col);
+                    changed = true;
                 }
             }
         }
     }
-    return false;
+
+    if (changed) {
+        *current_row = row_bits;
+    }
+    return changed;
 }
 
 // Print the matrix values

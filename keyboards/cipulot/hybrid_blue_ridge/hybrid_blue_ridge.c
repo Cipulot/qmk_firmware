@@ -21,18 +21,18 @@
 socd_cleaner_t socd_opposing_pairs[4];
 
 void eeconfig_init_kb(void) {
-    // Default values
-    eeprom_ec_config.switch_type                    = 0;
-    eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_ec_config.mode_0_actuation_threshold     = DEFAULT_MODE_0_ACTUATION_LEVEL;
-    eeprom_ec_config.mode_0_release_threshold       = DEFAULT_MODE_0_RELEASE_LEVEL;
-    eeprom_ec_config.mode_1_initial_deadzone_offset = DEFAULT_MODE_1_INITIAL_DEADZONE_OFFSET;
-    eeprom_ec_config.mode_1_actuation_offset        = DEFAULT_MODE_1_ACTUATION_OFFSET;
-    eeprom_ec_config.mode_1_release_offset          = DEFAULT_MODE_1_RELEASE_OFFSET;
-
+    // Initialize all keys with default values
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.bottoming_reading[row][col] = DEFAULT_BOTTOMING_READING;
+            key_state_t *key = &eeprom_ec_config.key_state[row][col];
+            key->switch_type                = DEFAULT_SWITCH_TYPE;
+            key->actuation_mode             = DEFAULT_ACTUATION_MODE;
+            key->apc_actuation_threshold    = DEFAULT_APC_ACTUATION_LEVEL;
+            key->apc_release_threshold      = DEFAULT_APC_RELEASE_LEVEL;
+            key->rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+            key->rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+            key->rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
+            key->bottoming_reading          = DEFAULT_BOTTOMING_READING;
         }
     }
 
@@ -66,24 +66,19 @@ void keyboard_post_init_kb(void) {
     // Read custom menu variables from memory
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    // Set runtime values to EEPROM values
-    ec_config.switch_type                    = eeprom_ec_config.switch_type;
-    ec_config.actuation_mode                 = eeprom_ec_config.actuation_mode;
-    ec_config.mode_0_actuation_threshold     = eeprom_ec_config.mode_0_actuation_threshold;
-    ec_config.mode_0_release_threshold       = eeprom_ec_config.mode_0_release_threshold;
-    ec_config.mode_1_initial_deadzone_offset = eeprom_ec_config.mode_1_initial_deadzone_offset;
-    ec_config.mode_1_actuation_offset        = eeprom_ec_config.mode_1_actuation_offset;
-    ec_config.mode_1_release_offset          = eeprom_ec_config.mode_1_release_offset;
-    ec_config.bottoming_calibration          = false;
+    ec_config.bottoming_calibration = false;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.bottoming_calibration_starter[row][col]           = true;
-            ec_config.bottoming_reading[row][col]                       = eeprom_ec_config.bottoming_reading[row][col];
-            ec_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_mode_0_release_threshold[row][col]       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_mode_1_actuation_offset[row][col]        = rescale(ec_config.mode_1_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_mode_1_release_offset[row][col]          = rescale(ec_config.mode_1_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+            key_state_t *key_eeprom = &eeprom_ec_config.key_state[row][col];
+            key_state_t *key_runtime = &ec_config.key_state[row][col];
+
+            // Copy from EEPROM to runtime
+            *key_runtime = *key_eeprom;
+
+            // Initialize runtime-only values (noise_floor already set by ec_noise_floor())
+            key_runtime->bottoming_calibration_starter = true;
+            rescale_key_thresholds(key_runtime);
         }
     }
 
