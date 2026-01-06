@@ -19,11 +19,11 @@
 void eeconfig_init_kb(void) {
     // Default values
     eeprom_he_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_he_config.mode_0_actuation_threshold     = DEFAULT_MODE_0_ACTUATION_LEVEL;
-    eeprom_he_config.mode_0_release_threshold       = DEFAULT_MODE_0_RELEASE_LEVEL;
-    eeprom_he_config.mode_1_initial_deadzone_offset = DEFAULT_MODE_1_INITIAL_DEADZONE_OFFSET;
-    eeprom_he_config.mode_1_actuation_offset        = DEFAULT_MODE_1_ACTUATION_OFFSET;
-    eeprom_he_config.mode_1_release_offset          = DEFAULT_MODE_1_RELEASE_OFFSET;
+    eeprom_he_config.apc_actuation_threshold     = DEFAULT_APC_ACTUATION_LEVEL;
+    eeprom_he_config.apc_release_threshold       = DEFAULT_APC_RELEASE_LEVEL;
+    eeprom_he_config.rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+    eeprom_he_config.rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+    eeprom_he_config.rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -41,21 +41,21 @@ void keyboard_post_init_kb(void) {
 
     // Set runtime values to EEPROM values
     he_config.actuation_mode                 = eeprom_he_config.actuation_mode;
-    he_config.mode_0_actuation_threshold     = eeprom_he_config.mode_0_actuation_threshold;
-    he_config.mode_0_release_threshold       = eeprom_he_config.mode_0_release_threshold;
-    he_config.mode_1_initial_deadzone_offset = eeprom_he_config.mode_1_initial_deadzone_offset;
-    he_config.mode_1_actuation_offset        = eeprom_he_config.mode_1_actuation_offset;
-    he_config.mode_1_release_offset          = eeprom_he_config.mode_1_release_offset;
+    he_config.apc_actuation_threshold     = eeprom_he_config.apc_actuation_threshold;
+    he_config.apc_release_threshold       = eeprom_he_config.apc_release_threshold;
+    he_config.rt_initial_deadzone_offset = eeprom_he_config.rt_initial_deadzone_offset;
+    he_config.rt_actuation_offset        = eeprom_he_config.rt_actuation_offset;
+    he_config.rt_release_offset          = eeprom_he_config.rt_release_offset;
     he_config.bottoming_calibration          = false;
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             he_config.bottoming_calibration_starter[row][col]           = true;
             he_config.bottoming_reading[row][col]                       = eeprom_he_config.bottoming_reading[row][col];
-            he_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(he_config.mode_0_actuation_threshold, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_0_release_threshold[row][col]       = rescale(he_config.mode_0_release_threshold, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(he_config.mode_1_initial_deadzone_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_actuation_offset[row][col]        = rescale(he_config.mode_1_actuation_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
-            he_config.rescaled_mode_1_release_offset[row][col]          = rescale(he_config.mode_1_release_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_apc_actuation_threshold[row][col]     = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_apc_release_threshold[row][col]       = rescale(he_config.apc_release_threshold, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(he_config.rt_initial_deadzone_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_rt_actuation_offset[row][col]        = rescale(he_config.rt_actuation_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
+            he_config.rescaled_rt_release_offset[row][col]          = rescale(he_config.rt_release_offset, he_config.noise_floor[row][col], eeprom_he_config.bottoming_reading[row][col]);
         }
     }
 }

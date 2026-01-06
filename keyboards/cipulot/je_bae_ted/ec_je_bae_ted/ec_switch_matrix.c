@@ -146,12 +146,12 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
 
     // Normal board-wide APC
     if (ec_config.actuation_mode == 0) {
-        if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold[row][col]) {
+        if (current_state && sw_value < ec_config.rescaled_apc_release_threshold[row][col]) {
             *current_row &= ~(1 << col);
             uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold[row][col]) {
+        if ((!current_state) && sw_value > ec_config.rescaled_apc_actuation_threshold[row][col]) {
             *current_row |= (1 << col);
             uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
             return true;
@@ -159,7 +159,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
     }
     // Rapid trigger starting from the initial deadzone
     else if (ec_config.actuation_mode == 1) {
-        if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset[row][col]) {
+        if (sw_value > ec_config.rescaled_rt_initial_deadzone_offset[row][col]) {
             // In DA zone?
             if (current_state) {
                 // Key is pressed
@@ -167,7 +167,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                 if (sw_value > ec_config.extremum[row][col]) {
                     ec_config.extremum[row][col] = sw_value;
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
-                } else if (sw_value < ec_config.extremum[row][col] - DEFAULT_MODE_1_RELEASE_OFFSET) {
+                } else if (sw_value < ec_config.extremum[row][col] - DEFAULT_RT_RELEASE_OFFSET) {
                     // Has key moved up enough to be released?
                     ec_config.extremum[row][col] = sw_value;
                     *current_row &= ~(1 << col);
@@ -179,7 +179,7 @@ bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t
                 // Is the key still moving up?
                 if (sw_value < ec_config.extremum[row][col]) {
                     ec_config.extremum[row][col] = sw_value;
-                } else if (sw_value > ec_config.extremum[row][col] + DEFAULT_MODE_1_ACTUATION_OFFSET) {
+                } else if (sw_value > ec_config.extremum[row][col] + DEFAULT_RT_ACTUATION_OFFSET) {
                     // Has key moved down enough to be pressed?
                     ec_config.extremum[row][col] = sw_value;
                     *current_row |= (1 << col);

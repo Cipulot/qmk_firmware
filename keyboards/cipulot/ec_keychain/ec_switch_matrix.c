@@ -148,19 +148,19 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
     if (sw_value < (ec_config.noise_floor - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d\n", sw_value);
         ec_config.noise_floor                             = sw_value;
-        ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_apc_actuation_threshold     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_apc_release_threshold       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_rt_initial_deadzone_offset = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
     }
 
     // Normal board-wide APC
     if (ec_config.actuation_mode == 0) {
-        if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold) {
+        if (current_state && sw_value < ec_config.rescaled_apc_release_threshold) {
             *current_row &= ~(1 << 0);
             uprintf("Key released: %d\n", sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold) {
+        if ((!current_state) && sw_value > ec_config.rescaled_apc_actuation_threshold) {
             *current_row |= (1 << 0);
             uprintf("Key pressed: %d\n", sw_value);
             return true;
@@ -169,7 +169,7 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
     // Rapid Trigger
     else if (ec_config.actuation_mode == 1) {
         // Is key in active zone?
-        if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset) {
+        if (sw_value > ec_config.rescaled_rt_initial_deadzone_offset) {
             // Is key pressed while in active zone?
             if (current_state) {
                 // Is the key still moving down?
@@ -178,7 +178,7 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
                     uprintf("Key pressed: %d\n", sw_value);
                 }
                 // Has key moved up enough to be released?
-                else if (sw_value < ec_config.extremum - ec_config.rescaled_mode_1_release_offset) {
+                else if (sw_value < ec_config.extremum - ec_config.rescaled_rt_release_offset) {
                     ec_config.extremum = sw_value;
                     *current_row &= ~(1 << 0);
                     uprintf("Key released: %d\n", sw_value);
@@ -192,7 +192,7 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
                     ec_config.extremum = sw_value;
                 }
                 // Has key moved down enough to be pressed?
-                else if (sw_value > ec_config.extremum + ec_config.rescaled_mode_1_actuation_offset) {
+                else if (sw_value > ec_config.extremum + ec_config.rescaled_rt_actuation_offset) {
                     ec_config.extremum = sw_value;
                     *current_row |= (1 << 0);
                     uprintf("Key pressed: %d\n", sw_value);

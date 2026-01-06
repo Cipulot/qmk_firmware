@@ -21,11 +21,11 @@ void eeconfig_init_kb(void) {
     // Default values
     eeprom_ec_config.switch_type                    = 0;
     eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_ec_config.mode_0_actuation_threshold     = DEFAULT_MODE_0_ACTUATION_LEVEL;
-    eeprom_ec_config.mode_0_release_threshold       = DEFAULT_MODE_0_RELEASE_LEVEL;
-    eeprom_ec_config.mode_1_initial_deadzone_offset = DEFAULT_MODE_1_INITIAL_DEADZONE_OFFSET;
-    eeprom_ec_config.mode_1_actuation_offset        = DEFAULT_MODE_1_ACTUATION_OFFSET;
-    eeprom_ec_config.mode_1_release_offset          = DEFAULT_MODE_1_RELEASE_OFFSET;
+    eeprom_ec_config.apc_actuation_threshold     = DEFAULT_APC_ACTUATION_LEVEL;
+    eeprom_ec_config.apc_release_threshold       = DEFAULT_APC_RELEASE_LEVEL;
+    eeprom_ec_config.rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+    eeprom_ec_config.rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+    eeprom_ec_config.rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
     eeprom_ec_config.bottoming_reading              = DEFAULT_BOTTOMING_READING;
 
     // Write default value to EEPROM now
@@ -42,19 +42,19 @@ void keyboard_post_init_kb(void) {
     // Set runtime values to EEPROM values
     ec_config.switch_type                             = eeprom_ec_config.switch_type;
     ec_config.actuation_mode                          = eeprom_ec_config.actuation_mode;
-    ec_config.mode_0_actuation_threshold              = eeprom_ec_config.mode_0_actuation_threshold;
-    ec_config.mode_0_release_threshold                = eeprom_ec_config.mode_0_release_threshold;
-    ec_config.mode_1_initial_deadzone_offset          = eeprom_ec_config.mode_1_initial_deadzone_offset;
-    ec_config.mode_1_actuation_offset                 = eeprom_ec_config.mode_1_actuation_offset;
-    ec_config.mode_1_release_offset                   = eeprom_ec_config.mode_1_release_offset;
+    ec_config.apc_actuation_threshold              = eeprom_ec_config.apc_actuation_threshold;
+    ec_config.apc_release_threshold                = eeprom_ec_config.apc_release_threshold;
+    ec_config.rt_initial_deadzone_offset          = eeprom_ec_config.rt_initial_deadzone_offset;
+    ec_config.rt_actuation_offset                 = eeprom_ec_config.rt_actuation_offset;
+    ec_config.rt_release_offset                   = eeprom_ec_config.rt_release_offset;
     ec_config.bottoming_calibration                   = false;
     ec_config.bottoming_calibration_starter           = true;
     ec_config.bottoming_reading                       = eeprom_ec_config.bottoming_reading;
-    ec_config.rescaled_mode_0_actuation_threshold     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_0_release_threshold       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_initial_deadzone_offset = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_actuation_offset        = rescale(ec_config.mode_1_actuation_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-    ec_config.rescaled_mode_1_release_offset          = rescale(ec_config.mode_1_release_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_apc_actuation_threshold     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_apc_release_threshold       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_rt_initial_deadzone_offset = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_rt_actuation_offset        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+    ec_config.rescaled_rt_release_offset          = rescale(ec_config.rt_release_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
 
     keyboard_post_init_user();
 }

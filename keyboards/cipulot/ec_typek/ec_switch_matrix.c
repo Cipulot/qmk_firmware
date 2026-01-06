@@ -260,19 +260,19 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
     if (sw_value < (ec_config.noise_floor[row][col] - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d, %d, %d\n", row, col, sw_value);
         ec_config.noise_floor[row][col]                             = sw_value;
-        ec_config.rescaled_mode_0_actuation_threshold[row][col]     = rescale(ec_config.mode_0_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_0_release_threshold[row][col]       = rescale(ec_config.mode_0_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-        ec_config.rescaled_mode_1_initial_deadzone_offset[row][col] = rescale(ec_config.mode_1_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+        ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+        ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+        ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
     }
 
     // Normal board-wide APC
     if (ec_config.actuation_mode == 0) {
-        if (current_state && sw_value < ec_config.rescaled_mode_0_release_threshold[row][col]) {
+        if (current_state && sw_value < ec_config.rescaled_apc_release_threshold[row][col]) {
             *current_row &= ~(1 << col);
             uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > ec_config.rescaled_mode_0_actuation_threshold[row][col]) {
+        if ((!current_state) && sw_value > ec_config.rescaled_apc_actuation_threshold[row][col]) {
             *current_row |= (1 << col);
             uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
             return true;
@@ -281,7 +281,7 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
     // Rapid Trigger
     else if (ec_config.actuation_mode == 1) {
         // Is key in active zone?
-        if (sw_value > ec_config.rescaled_mode_1_initial_deadzone_offset[row][col]) {
+        if (sw_value > ec_config.rescaled_rt_initial_deadzone_offset[row][col]) {
             // Is key pressed while in active zone?
             if (current_state) {
                 // Is the key still moving down?
@@ -290,7 +290,7 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);
                 }
                 // Has key moved up enough to be released?
-                else if (sw_value < ec_config.extremum[row][col] - ec_config.rescaled_mode_1_release_offset[row][col]) {
+                else if (sw_value < ec_config.extremum[row][col] - ec_config.rescaled_rt_release_offset[row][col]) {
                     ec_config.extremum[row][col] = sw_value;
                     *current_row &= ~(1 << col);
                     uprintf("Key released: %d, %d, %d\n", row, col, sw_value);
@@ -304,7 +304,7 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
                     ec_config.extremum[row][col] = sw_value;
                 }
                 // Has key moved down enough to be pressed?
-                else if (sw_value > ec_config.extremum[row][col] + ec_config.rescaled_mode_1_actuation_offset[row][col]) {
+                else if (sw_value > ec_config.extremum[row][col] + ec_config.rescaled_rt_actuation_offset[row][col]) {
                     ec_config.extremum[row][col] = sw_value;
                     *current_row |= (1 << col);
                     uprintf("Key pressed: %d, %d, %d\n", row, col, sw_value);

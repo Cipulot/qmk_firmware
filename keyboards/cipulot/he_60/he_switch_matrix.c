@@ -209,19 +209,19 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
     if (sw_value < (he_config.noise_floor[amux][col] - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d, %d, %d\n", amux, col, sw_value);
         he_config.noise_floor[amux][col]                             = sw_value;
-        he_config.rescaled_mode_0_actuation_threshold[amux][col]     = rescale(he_config.mode_0_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_mode_0_release_threshold[amux][col]       = rescale(he_config.mode_0_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_mode_1_initial_deadzone_offset[amux][col] = rescale(he_config.mode_1_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_apc_actuation_threshold[amux][col]     = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_apc_release_threshold[amux][col]       = rescale(he_config.apc_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_rt_initial_deadzone_offset[amux][col] = rescale(he_config.rt_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
     }
 
     // Normal board-wide APC
     if (he_config.actuation_mode == 0) {
-        if (current_state && sw_value < he_config.rescaled_mode_0_release_threshold[amux][col]) {
+        if (current_state && sw_value < he_config.rescaled_apc_release_threshold[amux][col]) {
             *current_row &= ~(1 << col);
             uprintf("Key released: %d, %d, %d\n", amux, col, sw_value);
             return true;
         }
-        if ((!current_state) && sw_value > he_config.rescaled_mode_0_actuation_threshold[amux][col]) {
+        if ((!current_state) && sw_value > he_config.rescaled_apc_actuation_threshold[amux][col]) {
             *current_row |= (1 << col);
             uprintf("Key pressed: %d, %d, %d\n", amux, col, sw_value);
             return true;
@@ -230,7 +230,7 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
     // Rapid Trigger
     else if (he_config.actuation_mode == 1) {
         // Is key in active zone?
-        if (sw_value > he_config.rescaled_mode_1_initial_deadzone_offset[amux][col]) {
+        if (sw_value > he_config.rescaled_rt_initial_deadzone_offset[amux][col]) {
             // Is key pressed while in active zone?
             if (current_state) {
                 // Is the key still moving down?
@@ -239,7 +239,7 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
                     uprintf("Key pressed: %d, %d, %d\n", amux, col, sw_value);
                 }
                 // Has key moved up enough to be released?
-                else if (sw_value < he_config.extremum[amux][col] - he_config.mode_1_release_offset) {
+                else if (sw_value < he_config.extremum[amux][col] - he_config.rt_release_offset) {
                     he_config.extremum[amux][col] = sw_value;
                     *current_row &= ~(1 << col);
                     uprintf("Key released: %d, %d, %d\n", amux, col, sw_value);
@@ -253,7 +253,7 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
                     he_config.extremum[amux][col] = sw_value;
                 }
                 // Has key moved down enough to be pressed?
-                else if (sw_value > he_config.extremum[amux][col] + he_config.mode_1_actuation_offset) {
+                else if (sw_value > he_config.extremum[amux][col] + he_config.rt_actuation_offset) {
                     he_config.extremum[amux][col] = sw_value;
                     *current_row |= (1 << col);
                     uprintf("Key pressed: %d, %d, %d\n", amux, col, sw_value);
