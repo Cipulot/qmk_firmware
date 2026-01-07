@@ -22,7 +22,7 @@ extern matrix_row_t matrix[MATRIX_ROWS];     // debounced values
 
 // Custom matrix init function
 void matrix_init_custom(void) {
-    // Initialize the EC switch matrix
+    // Initialize the Hybrid switch matrix
     hybrid_init();
 
     // Initialize the noise floor and rescale per-key thresholds
@@ -36,7 +36,7 @@ bool matrix_scan_custom(matrix_row_t current_matrix[]) {
     return updated;
 }
 
-// Bootmagic overriden to avoid conflicts with EC
+// Bootmagic overriden to avoid conflicts with Hybrid
 void bootmagic_scan(void) {
     ;
 }

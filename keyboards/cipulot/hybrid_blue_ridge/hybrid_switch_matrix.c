@@ -142,7 +142,7 @@ void discharge_capacitor(void) {
 #endif
 }
 
-// Initialize the EC switch matrix
+// Initialize the Hybrid switch matrix
 int hybrid_init(void) {
     // Initialize the ADC peripheral
     palSetLineMode(ANALOG_PORT, PAL_MODE_INPUT_ANALOG);
@@ -227,14 +227,14 @@ void hybrid_noise_floor_calibration(void) {
     }
 }
 
-// Scan the EC switch matrix
+// Scan the Hybrid switch matrix
 bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
     // Variable to track if any key state has changed
     bool updated = false;
     // Coordinate struct for ghost key detection
     KeyCoord keypresses[4];
     // Track count of keypresses in current scan cycle
-    uint8_t keypress_count = 0;
+    uint8_t mx_keypress_count = 0;
 
     // Column offsets for each AMUX
     uint8_t col_offsets[AMUX_COUNT];
@@ -265,8 +265,8 @@ bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
 
                 // Track keypresses for ghost key detection (MX mode)
                 if (key_runtime->switch_type == 1 && (sw_value[row][adjusted_col] > 1000)) {
-                    if (keypress_count < 4) {
-                        keypresses[keypress_count++] = (KeyCoord){row, adjusted_col};
+                    if (mx_keypress_count < 4) {
+                        keypresses[mx_keypress_count++] = (KeyCoord){row, adjusted_col};
                     }
                 }
 
@@ -292,13 +292,13 @@ bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
         }
     }
 
-    // Check if a square pattern exists and deactivate the last key in the pattern (ghost key)
-    if (keypress_count == 4 && runtime_hybrid_config.runtime_key_state[0][0].switch_type == 1) {
-        // If four keypresses detected, check for square formation
+    // Check if a square pattern exists and deactivate the last key in the pattern (ghost key
+    if (mx_keypress_count == 4) {
+        // If four keypresses detected, check for square formation (2x2 grid pattern)
         if (forms_square(keypresses[0], keypresses[1], keypresses[2], keypresses[3])) {
-            // Deactivate the last key in the square pattern (ghost key)
+            // The last scanned key in the 2x2 square is the ghost key (determined by hardware scan order)
             KeyCoord ghost_key = keypresses[3];
-            // Clear the ghost key in the matrix
+            // Deactivate the ghost key from the matrix
             current_matrix[ghost_key.row] &= ~(1 << ghost_key.col);
         }
     }
@@ -515,13 +515,35 @@ void update_keys_field_rescale(update_mode_t mode, size_t runtime_offset, size_t
 
 // Check if four coordinates form a square
 bool forms_square(KeyCoord key1, KeyCoord key2, KeyCoord key3, KeyCoord key4) {
-    // Check if there are two distinct rows and two distinct columns
-    bool row_check = (key1.row == key2.row && key3.row == key4.row && key1.row != key3.row) || (key1.row == key3.row && key2.row == key4.row && key1.row != key2.row) || (key1.row == key4.row && key2.row == key3.row && key1.row != key2.row);
-    // Check if there are two distinct columns
-    bool col_check = (key1.col == key2.col && key3.col == key4.col && key1.col != key3.col) || (key1.col == key3.col && key2.col == key4.col && key1.col != key2.col) || (key1.col == key4.col && key2.col == key3.col && key1.col != key2.col);
+    KeyCoord keys[4] = {key1, key2, key3, key4};
 
-    // Return true if both row and column checks pass
-    return row_check && col_check;
+    // Collect unique rows and columns
+    uint8_t unique_rows = 0, unique_cols = 0;
+    uint8_t rows[2] = {0xFF, 0xFF}; // Use 0xFF as sentinel for "not set"
+    uint8_t cols[2] = {0xFF, 0xFF};
+
+    for (uint8_t i = 0; i < 4; i++) {
+        // Check and add unique row
+        if (keys[i].row != rows[0] && keys[i].row != rows[1]) {
+            if (unique_rows < 2) {
+                rows[unique_rows++] = keys[i].row;
+            } else {
+                return false; // More than 2 unique rows
+            }
+        }
+
+        // Check and add unique column
+        if (keys[i].col != cols[0] && keys[i].col != cols[1]) {
+            if (unique_cols < 2) {
+                cols[unique_cols++] = keys[i].col;
+            } else {
+                return false; // More than 2 unique columns
+            }
+        }
+    }
+
+    // Valid square: exactly 2 unique rows AND exactly 2 unique columns
+    return unique_rows == 2 && unique_cols == 2;
 }
 
 // Print the switch matrix values for debugging
