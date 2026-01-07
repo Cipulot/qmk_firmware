@@ -24,6 +24,15 @@
 #include "util.h"
 #include "socd_cleaner.h"
 
+// Rescale mode enumeration
+typedef enum {
+    // clang-format off
+    RESCALE_MODE_APC = 0,
+    RESCALE_MODE_RT = 1,
+    RESCALE_MODE_ALL = 2
+    // clang-format on
+} rescale_mode_t;
+
 // Runtime key state structure definitions
 typedef struct PACKED {
     uint8_t  actuation_mode;             // 0: APC, 1: Rapid Trigger
@@ -42,7 +51,7 @@ typedef struct PACKED {
     uint16_t noise_floor;                   // Real time noise floor
     uint16_t extremum;                      // Extremum value for RT
     bool     bottoming_calibration_starter; // Flag to start bottoming calibration
-    uint16_t bottoming_calibration_reading;             // Bottoming reading for rescaling
+    uint16_t bottoming_calibration_reading; // Bottoming reading for rescaling
 } runtime_key_state_t;
 
 // EEPROM key state structure definitions (reduced parameters to save space, missing values are calculated at runtime)
@@ -96,7 +105,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col);
 bool     ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value);
 bool     ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
 bool     ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
-void     bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom);
+void     bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom, rescale_mode_t mode);
 void     ec_print_matrix(void);
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 

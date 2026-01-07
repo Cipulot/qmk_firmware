@@ -221,7 +221,7 @@ void ec_noise_floor_calibration(void) {
             // Average the noise floor
             key_runtime->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
             // Rescale all key thresholds based on the new noise floor
-            bulk_rescale_key_thresholds(key_runtime, key_eeprom);
+            bulk_rescale_key_thresholds(key_runtime, key_eepromm, RESCALE_MODE_ALL);
         }
     }
 }
@@ -326,7 +326,7 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
         // Update noise floor
         key_runtime->noise_floor = sw_value;
         // Rescale all key thresholds based on new noise floor
-        bulk_rescale_key_thresholds(key_runtime, key_eeprom);
+        bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
     }
 
     // Update key state based on actuation mode
@@ -394,13 +394,30 @@ bool ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value,
     return false;
 }
 
-// Rescale all thresholds for a singular key
-void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom) {
-    key_runtime->rescaled_apc_actuation_threshold    = rescale(key_runtime->apc_actuation_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
-    key_runtime->rescaled_apc_release_threshold      = rescale(key_runtime->apc_release_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
-    key_runtime->rescaled_rt_initial_deadzone_offset = rescale(key_runtime->rt_initial_deadzone_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
-    key_runtime->rescaled_rt_actuation_offset        = rescale(key_runtime->rt_actuation_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
-    key_runtime->rescaled_rt_release_offset          = rescale(key_runtime->rt_release_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+// Rescale all key thresholds based on noise floor and bottoming calibration reading
+void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom, rescale_mode_t mode) {
+    // Rescale thresholds based on mode
+    switch (mode) {
+        case RESCALE_MODE_APC: // APC
+            key_runtime->rescaled_apc_actuation_threshold = rescale(key_runtime->apc_actuation_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_apc_release_threshold   = rescale(key_runtime->apc_release_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            break;
+        case RESCALE_MODE_RT: // RT
+            key_runtime->rescaled_rt_initial_deadzone_offset = rescale(key_runtime->rt_initial_deadzone_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_rt_actuation_offset        = rescale(key_runtime->rt_actuation_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_rt_release_offset          = rescale(key_runtime->rt_release_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            break;
+        case RESCALE_MODE_ALL: // All thresholds
+            key_runtime->rescaled_apc_actuation_threshold    = rescale(key_runtime->apc_actuation_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_apc_release_threshold      = rescale(key_runtime->apc_release_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_rt_initial_deadzone_offset = rescale(key_runtime->rt_initial_deadzone_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_rt_actuation_offset        = rescale(key_runtime->rt_actuation_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            key_runtime->rescaled_rt_release_offset          = rescale(key_runtime->rt_release_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+            break;
+        default:
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
+            break;
+    }
 }
 
 // Print the switch matrix values for debugging

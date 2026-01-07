@@ -91,7 +91,7 @@ void keyboard_post_init_kb(void) {
             key_runtime->bottoming_calibration_starter = DEFAULT_CALIBRATION_STARTER;
 
             // Rescale all key thresholds based on noise floor and bottoming reading
-            bulk_rescale_key_thresholds(key_runtime, key_eeprom);
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
         }
     }
     // Register RPC handler for VIA commands if split keyboard
