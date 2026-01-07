@@ -40,7 +40,7 @@ typedef enum {
     EC_UPDATE_SHARED_OFFSET = 1, // Runtime + EEPROM share same field offset
     EC_UPDATE_DUAL_OFFSET   = 2  // Runtime + EEPROM use different field offsets
     // clang-format on
-} ec_update_mode_t;
+} update_mode_t;
 
 // Runtime key state structure definitions
 typedef struct PACKED {
@@ -115,7 +115,7 @@ bool     ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint
 bool     ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
 bool     ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
 void     bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom, rescale_mode_t mode);
-void     ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size);
+void     update_keys_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size);
 void     ec_print_matrix(void);
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 

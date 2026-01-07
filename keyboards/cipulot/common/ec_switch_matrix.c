@@ -260,7 +260,6 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][adjusted_col];
 
                 // Handle bottoming calibration or update key state
-
                 // In bottoming calibration mode
                 if (runtime_ec_config.bottoming_calibration) {
                     // Only track keys that are actually pressed (above noise floor + threshold)
@@ -422,7 +421,7 @@ void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_st
 }
 
 // Unified helper function to update a field across all keys (runtime-only)
-void ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
+void update_keys_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             // Update runtime
@@ -442,7 +441,7 @@ void ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t e
 }
 
 // Update a field across all keys and immediately rescale thresholds (runtime-only or in-memory EEPROM)
-void ec_update_keys_field_rescale(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size, rescale_mode_t rescale_mode) {
+void update_keys_field_rescale(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size, rescale_mode_t rescale_mode) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];

@@ -22,16 +22,16 @@ extern matrix_row_t matrix[MATRIX_ROWS];     // debounced values
 
 // Custom matrix init function
 void matrix_init_custom(void) {
-    // Initialize EC
-    ec_init();
+    // Initialize the EC switch matrix
+    hybrid_init();
 
-    // Get the noise floor at boot
-    ec_noise_floor();
+    // Initialize the noise floor and rescale per-key thresholds
+    hybrid_noise_floor_calibration();
 }
 
 // Custom matrix scan function
 bool matrix_scan_custom(matrix_row_t current_matrix[]) {
-    bool updated = ec_matrix_scan(current_matrix);
+    bool updated = hybrid_matrix_scan(current_matrix);
 
     return updated;
 }
