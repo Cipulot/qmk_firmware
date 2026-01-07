@@ -132,12 +132,14 @@ void via_config_set_value(uint8_t *data) {
             if (value == 1) {
                 // Set the bottoming calibration flag to true
                 runtime_ec_config.bottoming_calibration = true;
+                clear_keyboard();
                 uprintf("##############################\n");
                 uprintf("# Bottoming calibration mode #\n");
                 uprintf("##############################\n");
             } else {
                 // Set the bottoming calibration flag to false and save readings
                 runtime_ec_config.bottoming_calibration = false;
+                clear_keyboard();
                 ec_save_bottoming_calibration_reading();
                 uprintf("## Bottoming calibration done ##\n");
                 ec_show_calibration_data();
