@@ -388,7 +388,6 @@ static void ec_save_threshold_data(uint8_t option) {
 }
 
 // Handle the application of the bottoming calibration data and save to EEPROM
-
 static void ec_save_bottoming_calibration_reading(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -417,7 +416,7 @@ static void ec_save_bottoming_calibration_reading(void) {
             }
         }
     }
-    // Save to EEPROM the key_state field
+    // Save to EEPROM the eeprom_key_state field
     eeconfig_update_kb_datablock_field(eeprom_ec_config, eeprom_key_state);
 }
 
