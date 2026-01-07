@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,13 +53,13 @@
 #define DEFAULT_MODE_1_RELEASE_SENSITIVITY 70
 #define DEFAULT_EXTREMUM 1023
 #define EXPECTED_NOISE_FLOOR 0
-#define NOISE_FLOOR_THRESHOLD 50
+#define NOISE_FLOOR_THRESHOLD 25
 #define BOTTOMING_CALIBRATION_THRESHOLD 100
 #define DEFAULT_NOISE_FLOOR_SAMPLING_COUNT 30
-#define DEFAULT_BOTTOMING_READING 1023
+#define DEFAULT_BOTTOMING_CALIBRATION_READING 1023
 #define DEFAULT_CALIBRATION_STARTER true
 
-#define CHARGE_TIME 2
+#define CHARGE_TIME 1
 #define DISCHARGE_TIME 10
 
 #define EECONFIG_KB_DATA_SIZE 159

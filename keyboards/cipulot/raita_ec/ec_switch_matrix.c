@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,10 +101,10 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             sw_value[row][0] = ec_readkey_raw(0, row, 0);
             if (ec_config.bottoming_calibration_starter[row][0]) {
-                ec_config.bottoming_reading[row][0]             = sw_value[row][0];
+                ec_config.bottoming_calibration_reading[row][0]             = sw_value[row][0];
                 ec_config.bottoming_calibration_starter[row][0] = false;
-            } else if (sw_value[row][0] > ec_config.bottoming_reading[row][0]) {
-                ec_config.bottoming_reading[row][0] = sw_value[row][0];
+            } else if (sw_value[row][0] > ec_config.bottoming_calibration_reading[row][0]) {
+                ec_config.bottoming_calibration_reading[row][0] = sw_value[row][0];
             }
         }
 

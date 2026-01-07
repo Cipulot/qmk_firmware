@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -248,10 +248,10 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
                 if (ec_config.bottoming_calibration) {
                     if (key->bottoming_calibration_starter) {
-                        key->bottoming_reading             = sw_value[row][adjusted_col];
+                        key->bottoming_calibration_reading             = sw_value[row][adjusted_col];
                         key->bottoming_calibration_starter = false;
-                    } else if (sw_value[row][adjusted_col] > key->bottoming_reading) {
-                        key->bottoming_reading = sw_value[row][adjusted_col];
+                    } else if (sw_value[row][adjusted_col] > key->bottoming_calibration_reading) {
+                        key->bottoming_calibration_reading = sw_value[row][adjusted_col];
                     }
                 } else {
                     updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
@@ -384,11 +384,11 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
 
 // Rescale per-key thresholds based on noise floor and bottoming reading
 void rescale_key_thresholds(key_state_t *key) {
-    key->rescaled_apc_actuation_threshold    = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_apc_release_threshold      = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
+    key->rescaled_apc_actuation_threshold    = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_calibration_reading);
+    key->rescaled_apc_release_threshold      = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_calibration_reading);
+    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_calibration_reading);
+    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_calibration_reading);
+    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_calibration_reading);
     key->extremum                            = key->noise_floor;
 }
 

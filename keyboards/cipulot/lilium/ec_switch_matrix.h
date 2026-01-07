@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ typedef struct PACKED {
     uint16_t rt_initial_deadzone_offset;              // threshold for key press in mode 1
     uint8_t  rt_actuation_offset;                     // offset for key press in mode 1 (1-255)
     uint8_t  rt_release_offset;                       // offset for key release in mode 1 (1-255)
-    uint16_t bottoming_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
+    uint16_t bottoming_calibration_reading[MATRIX_ROWS][MATRIX_COLS]; // bottoming reading
 } eeprom_ec_config_t;
 
 typedef struct {
@@ -57,7 +57,7 @@ typedef struct {
     uint16_t noise_floor[MATRIX_ROWS][MATRIX_COLS];                             // noise floor detected during startup
     bool     bottoming_calibration;                                             // calibration mode for bottoming out values (true: calibration mode, false: normal mode)
     bool     bottoming_calibration_starter[MATRIX_ROWS][MATRIX_COLS];           // calibration mode for bottoming out values (true: calibration mode, false: normal mode)
-    uint16_t bottoming_reading[MATRIX_ROWS][MATRIX_COLS];                       // bottoming reading
+    uint16_t bottoming_calibration_reading[MATRIX_ROWS][MATRIX_COLS];                       // bottoming reading
 } ec_config_t;
 
 // Check if the size of the reserved persistent memory is the same as the size of struct eeprom_ec_config_t

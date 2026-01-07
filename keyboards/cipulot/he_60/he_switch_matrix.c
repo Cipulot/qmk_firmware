@@ -1,4 +1,4 @@
-/* Copyright 2024 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -154,10 +154,10 @@ bool he_matrix_scan(matrix_row_t current_matrix[]) {
 
             if (he_config.bottoming_calibration) {
                 if (he_config.bottoming_calibration_starter[amux][col]) {
-                    he_config.bottoming_reading[amux][col]             = sw_value[amux][col];
+                    he_config.bottoming_calibration_reading[amux][col]             = sw_value[amux][col];
                     he_config.bottoming_calibration_starter[amux][col] = false;
-                } else if (sw_value[amux][col] > he_config.bottoming_reading[amux][col]) {
-                    he_config.bottoming_reading[amux][col] = sw_value[amux][col];
+                } else if (sw_value[amux][col] > he_config.bottoming_calibration_reading[amux][col]) {
+                    he_config.bottoming_calibration_reading[amux][col] = sw_value[amux][col];
                 }
             } else {
                 updated |= he_update_key(&current_matrix[amux], amux, col, sw_value[amux][col]);
@@ -209,9 +209,9 @@ bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_
     if (sw_value < (he_config.noise_floor[amux][col] - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d, %d, %d\n", amux, col, sw_value);
         he_config.noise_floor[amux][col]                             = sw_value;
-        he_config.rescaled_apc_actuation_threshold[amux][col]     = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_apc_release_threshold[amux][col]       = rescale(he_config.apc_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
-        he_config.rescaled_rt_initial_deadzone_offset[amux][col] = rescale(he_config.rt_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_reading[amux][col]);
+        he_config.rescaled_apc_actuation_threshold[amux][col]     = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
+        he_config.rescaled_apc_release_threshold[amux][col]       = rescale(he_config.apc_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
+        he_config.rescaled_rt_initial_deadzone_offset[amux][col] = rescale(he_config.rt_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
     }
 
     // Normal board-wide APC

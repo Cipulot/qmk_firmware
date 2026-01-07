@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ void eeconfig_init_kb(void) {
     // Initialize all keys with default values
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            key_state_t *key = &eeprom_ec_config.key_state[row][col];
+            key_state_t *key = &eeprom_ec_config.eeprom_key_state[row][col];
             key->switch_type                = DEFAULT_SWITCH_TYPE;
             key->actuation_mode             = DEFAULT_ACTUATION_MODE;
             key->apc_actuation_threshold    = DEFAULT_APC_ACTUATION_LEVEL;
@@ -32,7 +32,7 @@ void eeconfig_init_kb(void) {
             key->rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
             key->rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
             key->rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
-            key->bottoming_reading          = DEFAULT_BOTTOMING_READING;
+            key->bottoming_calibration_reading          = DEFAULT_BOTTOMING_CALIBRATION_READING;
         }
     }
 
@@ -70,7 +70,7 @@ void keyboard_post_init_kb(void) {
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            key_state_t *key_eeprom = &eeprom_ec_config.key_state[row][col];
+            key_state_t *key_eeprom = &eeprom_ec_config.eeprom_key_state[row][col];
             key_state_t *key_runtime = &ec_config.key_state[row][col];
 
             // Copy from EEPROM to runtime

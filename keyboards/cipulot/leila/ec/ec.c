@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ void eeconfig_init_kb(void) {
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.bottoming_reading[row][col] = DEFAULT_BOTTOMING_READING;
+            eeprom_ec_config.bottoming_calibration_reading[row][col] = DEFAULT_BOTTOMING_CALIBRATION_READING;
         }
     }
 
@@ -97,12 +97,12 @@ void keyboard_post_init_kb(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             ec_config.bottoming_calibration_starter[row][col]           = true;
-            ec_config.bottoming_reading[row][col]                       = eeprom_ec_config.bottoming_reading[row][col];
-            ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_actuation_offset[row][col]        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_release_offset[row][col]          = rescale(ec_config.rt_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+            ec_config.bottoming_calibration_reading[row][col]                       = eeprom_ec_config.bottoming_calibration_reading[row][col];
+            ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            ec_config.rescaled_rt_actuation_offset[row][col]        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            ec_config.rescaled_rt_release_offset[row][col]          = rescale(ec_config.rt_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
         }
     }
 

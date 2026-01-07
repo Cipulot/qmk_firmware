@@ -51,7 +51,7 @@
         "shared_endpoint": {
             "keyboard": true
         },
-        "vid": "0x6963"
+        "vid": "0x6369"
     },
     "ws2812": {
         "driver": "pwm",

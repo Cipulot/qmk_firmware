@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,68 +18,86 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include "matrix.h"
 #include "eeconfig.h"
 #include "util.h"
 #include "socd_cleaner.h"
 
-// Per-key state structure for hybrid switches (EC/MX)
+// Runtime key state structure definitions
 typedef struct PACKED {
-    uint8_t  actuation_mode;          // 0: APC, 1: Rapid Trigger
-    uint16_t apc_actuation_threshold; // per-key thresholds for mode 0
-    uint16_t apc_release_threshold;
-    uint16_t rt_initial_deadzone_offset; // per-key thresholds for mode 1
-    uint8_t  rt_actuation_offset;
-    uint8_t  rt_release_offset;
+    uint8_t  actuation_mode;             // 0: APC, 1: Rapid Trigger
+    uint16_t apc_actuation_threshold;    // APC actuation threshold
+    uint16_t apc_release_threshold;      // APC release threshold
+    uint16_t rt_initial_deadzone_offset; // RT initial deadzone offset
+    uint8_t  rt_actuation_offset;        // RT actuation offset
+    uint8_t  rt_release_offset;          // RT release offset
 
-    uint16_t noise_floor;                   // detected noise floor
-    uint16_t extremum;                      // rapid-trigger extremum tracker
-    bool     bottoming_calibration_starter; // pending bottoming sample flag
-    uint16_t bottoming_reading;             // per-key bottoming reading
+    uint16_t rescaled_apc_actuation_threshold;    // Rescaled APC actuation threshold
+    uint16_t rescaled_apc_release_threshold;      // Rescaled APC release threshold
+    uint16_t rescaled_rt_initial_deadzone_offset; // Rescaled RT initial deadzone offset
+    uint8_t  rescaled_rt_actuation_offset;        // Rescaled RT actuation offset
+    uint8_t  rescaled_rt_release_offset;          // Rescaled RT release offset
 
-    uint16_t rescaled_apc_actuation_threshold; // rescaled thresholds using noise_floor/bottoming
-    uint16_t rescaled_apc_release_threshold;
-    uint16_t rescaled_rt_initial_deadzone_offset;
-    uint8_t  rescaled_rt_actuation_offset;
-    uint8_t  rescaled_rt_release_offset;
-} key_state_t;
+    uint16_t noise_floor;                   // Real time noise floor
+    uint16_t extremum;                      // Extremum value for RT
+    bool     bottoming_calibration_starter; // Flag to start bottoming calibration
+    uint16_t bottoming_calibration_reading;             // Bottoming reading for rescaling
+} runtime_key_state_t;
 
+// EEPROM key state structure definitions (reduced parameters to save space, missing values are calculated at runtime)
 typedef struct PACKED {
-    // Per-key persistent data (includes thresholds, calibration and actuation_mode)
-    key_state_t    key_state[MATRIX_ROWS][MATRIX_COLS];
-    socd_cleaner_t socd_opposing_pairs[4]; // SOCD
+    uint8_t  actuation_mode;             // 0: APC, 1: Rapid Trigger
+    uint16_t apc_actuation_threshold;    // APC actuation threshold
+    uint16_t apc_release_threshold;      // APC release threshold
+    uint16_t rt_initial_deadzone_offset; // RT initial deadzone offset
+    uint8_t  rt_actuation_offset;        // RT actuation offset
+    uint8_t  rt_release_offset;          // RT release offset
+
+    uint16_t bottoming_calibration_reading; // Bottoming reading for rescaling
+} eeprom_key_state_t;
+
+// Runtime configuration structure definitions
+typedef struct PACKED {
+    bool                bottoming_calibration;                       // Runtime board level flag for bottoming calibration
+    runtime_key_state_t runtime_key_state[MATRIX_ROWS][MATRIX_COLS]; // Per-key runtime state
+} runtime_ec_config_t;
+
+// EEPROM configuration structure definitions
+typedef struct PACKED {
+    eeprom_key_state_t eeprom_key_state[MATRIX_ROWS][MATRIX_COLS]; // Per-key EEPROM state
+    socd_cleaner_t     eeprom_socd_opposing_pairs[4];              // SOCD cleaner pairs
 } eeprom_ec_config_t;
 
-typedef struct {
-    bool        bottoming_calibration;
-    key_state_t key_state[MATRIX_ROWS][MATRIX_COLS];
-} ec_config_t;
-
-// Check if the size of the reserved persistent memory is the same as the size of struct eeprom_ec_config_t
+// Compile-time check for EECONFIG_KB_DATA_SIZE
+// EECONFIG_KB_DATA_SIZE = 20 + (11 * MATRIX_ROWS * MATRIX_COLS)
 _Static_assert(sizeof(eeprom_ec_config_t) == EECONFIG_KB_DATA_SIZE, "Mismatch in keyboard EECONFIG stored data");
 
-extern eeprom_ec_config_t eeprom_ec_config;
-
-extern ec_config_t ec_config;
-
+// Extern declarations
+extern eeprom_ec_config_t  eeprom_ec_config;  // EEPROM configuration instance
+extern runtime_ec_config_t runtime_ec_config; // Runtime configuration instance
+// Runtime SOCD cleaner pairs
+// For now it can't be part of runtime_ec_config_t due to how the submodule checks for the existance of the structure
 extern socd_cleaner_t socd_opposing_pairs[4];
 
+// Function prototypes
 void init_row(void);
-void init_amux(void);
 void disable_unused_row(uint8_t row);
+void init_amux(void);
 void select_amux_channel(uint8_t channel, uint8_t col);
 void disable_unused_amux(uint8_t channel);
-void discharge_capacitor(void);
 void charge_capacitor(uint8_t row);
+void discharge_capacitor(void);
 
 int      ec_init(void);
-void     ec_noise_floor(void);
+void     ec_noise_floor_calibration(void);
 bool     ec_matrix_scan(matrix_row_t current_matrix[]);
 uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col);
 bool     ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value);
+bool     ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
+bool     ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed);
+void     bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom);
 void     ec_print_matrix(void);
-void     rescale_key_thresholds(key_state_t *key);
-
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max);
 
 #ifdef UNUSED_POSITIONS_LIST

@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ typedef struct PACKED {
     uint16_t noise_floor;                   // detected noise floor
     uint16_t extremum;                      // rapid-trigger extremum tracker
     bool     bottoming_calibration_starter; // pending bottoming sample flag
-    uint16_t bottoming_reading;             // per-key bottoming reading
+    uint16_t bottoming_calibration_reading;             // per-key bottoming reading
 
     uint16_t rescaled_apc_actuation_threshold; // rescaled thresholds using noise_floor/bottoming
     uint16_t rescaled_apc_release_threshold;

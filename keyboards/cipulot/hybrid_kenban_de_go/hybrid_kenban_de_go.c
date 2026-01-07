@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 
 #include "hybrid_switch_matrix.h"
 #include "keyboard.h"
-#include "quantum.h"
 
 #ifdef QUANTUM_PAINTER_ENABLE
 #    include "graphics/display.h"
@@ -30,18 +29,18 @@
 socd_cleaner_t socd_opposing_pairs[4];
 
 void eeconfig_init_kb(void) {
-    // Default values
-    eeprom_ec_config.switch_type                    = 0;
-    eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_ec_config.apc_actuation_threshold     = DEFAULT_APC_ACTUATION_LEVEL;
-    eeprom_ec_config.apc_release_threshold       = DEFAULT_APC_RELEASE_LEVEL;
-    eeprom_ec_config.rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
-    eeprom_ec_config.rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
-    eeprom_ec_config.rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
-
+    // Initialize all keys with default values
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.bottoming_reading[row][col] = DEFAULT_BOTTOMING_READING;
+            key_state_t *key                = &eeprom_ec_config.eeprom_key_state[row][col];
+            key->switch_type                = DEFAULT_SWITCH_TYPE;
+            key->actuation_mode             = DEFAULT_ACTUATION_MODE;
+            key->apc_actuation_threshold    = DEFAULT_APC_ACTUATION_LEVEL;
+            key->apc_release_threshold      = DEFAULT_APC_RELEASE_LEVEL;
+            key->rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+            key->rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+            key->rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
+            key->bottoming_calibration_reading          = DEFAULT_BOTTOMING_CALIBRATION_READING;
         }
     }
 
@@ -75,24 +74,19 @@ void keyboard_post_init_kb(void) {
     // Read custom menu variables from memory
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    // Set runtime values to EEPROM values
-    ec_config.switch_type                    = eeprom_ec_config.switch_type;
-    ec_config.actuation_mode                 = eeprom_ec_config.actuation_mode;
-    ec_config.apc_actuation_threshold     = eeprom_ec_config.apc_actuation_threshold;
-    ec_config.apc_release_threshold       = eeprom_ec_config.apc_release_threshold;
-    ec_config.rt_initial_deadzone_offset = eeprom_ec_config.rt_initial_deadzone_offset;
-    ec_config.rt_actuation_offset        = eeprom_ec_config.rt_actuation_offset;
-    ec_config.rt_release_offset          = eeprom_ec_config.rt_release_offset;
-    ec_config.bottoming_calibration          = false;
+    ec_config.bottoming_calibration = false;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.bottoming_calibration_starter[row][col]           = true;
-            ec_config.bottoming_reading[row][col]                       = eeprom_ec_config.bottoming_reading[row][col];
-            ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_actuation_offset[row][col]        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
-            ec_config.rescaled_rt_release_offset[row][col]          = rescale(ec_config.rt_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_reading[row][col]);
+            key_state_t *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+            key_state_t *key_runtime = &ec_config.key_state[row][col];
+
+            // Copy from EEPROM to runtime
+            *key_runtime = *key_eeprom;
+
+            // Initialize runtime-only values (noise_floor already set by ec_noise_floor())
+            key_runtime->bottoming_calibration_starter = true;
+            rescale_key_thresholds(key_runtime);
         }
     }
 
@@ -105,7 +99,12 @@ void keyboard_post_init_kb(void) {
     if (is_keyboard_master()) {
         // Sync EEPROM config to slave side
         // This is done to ensure both sides have the same configuration in the case one side (either the master or the slave) is connected by itself and has its own EEPROM data.
-        transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_ec_config_t), &eeprom_ec_config);
+        // transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_ec_config_t), &eeprom_ec_config);
+        uint16_t config_size = sizeof(eeprom_ec_config_t);
+        for (uint16_t offset = 0; offset < config_size; offset += 255) {
+            uint8_t chunk_size = (config_size - offset > 255) ? 255 : (config_size - offset);
+            transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, chunk_size, (uint8_t *)&eeprom_ec_config + offset);
+        }
     }
 #endif
 
@@ -117,10 +116,29 @@ void keyboard_post_init_kb(void) {
 }
 
 #ifdef SPLIT_KEYBOARD
+/*
 void kb_eeprom_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
     if (m2s_size == sizeof(eeprom_ec_config_t)) {
         memcpy(&eeprom_ec_config, m2s_buffer, sizeof(eeprom_ec_config_t));
         eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
+    } else {
+        uprintf("Unexpected response in slave handler of EEPROM sync\n");
+    }
+}
+*/
+static uint16_t eeprom_sync_offset = 0;
+
+void kb_eeprom_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
+    if (m2s_size > 0) {
+        // Copy chunk into the appropriate offset
+        memcpy((uint8_t *)&eeprom_ec_config + eeprom_sync_offset, m2s_buffer, m2s_size);
+        eeprom_sync_offset += m2s_size;
+
+        // Check if we've received all data
+        if (eeprom_sync_offset >= sizeof(eeprom_ec_config_t)) {
+            eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
+            eeprom_sync_offset = 0; // Reset for next sync
+        }
     } else {
         uprintf("Unexpected response in slave handler of EEPROM sync\n");
     }

@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@
 #    error "AVR platforms not supported due to a variety of reasons. Among them there are limited memory, limited number of pins and ADC not being able to give satisfactory results."
 #endif
 
+// Define if open-drain pin mode is supported
 #define OPEN_DRAIN_SUPPORT defined(PAL_MODE_OUTPUT_OPENDRAIN)
 
-eeprom_ec_config_t eeprom_ec_config;
-ec_config_t        ec_config;
+eeprom_ec_config_t  eeprom_ec_config;       // Definition of EEPROM shared instance
+runtime_ec_config_t runtime_ec_config;      // Definition of runtime shared instance
+socd_cleaner_t      socd_opposing_pairs[4]; // Definition of SOCD shared instance
 
 // Pin and port array
 const pin_t row_pins[]                                 = MATRIX_ROW_PINS;
@@ -37,12 +39,15 @@ const pin_t amux_en_pins[]                             = AMUX_EN_PINS;
 const pin_t amux_n_col_sizes[]                         = AMUX_COL_CHANNELS_SIZES;
 const pin_t amux_n_col_channels[][AMUX_MAX_COLS_COUNT] = {AMUX_COL_CHANNELS};
 
+// Define unused positions array if specified
 #ifdef UNUSED_POSITIONS_LIST
 const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
 #    define UNUSED_POSITIONS_COUNT ARRAY_SIZE(UNUSED_POSITIONS)
 #endif
 
+// Number of AMUX selection pins
 #define AMUX_SEL_PINS_COUNT ARRAY_SIZE(amux_sel_pins)
+// Expected number of AMUX selection pins
 #define EXPECTED_AMUX_SEL_PINS_COUNT ceil(log2(AMUX_MAX_COLS_COUNT))
 
 // Checks for the correctness of the configuration
@@ -52,8 +57,10 @@ _Static_assert(AMUX_SEL_PINS_COUNT == EXPECTED_AMUX_SEL_PINS_COUNT, "AMUX_SEL_PI
 // Check that number of elements in AMUX_COL_CHANNELS_SIZES is enough to specify the number of channels for all the multiplexers available
 _Static_assert(ARRAY_SIZE(amux_n_col_sizes) == AMUX_COUNT, "AMUX_COL_CHANNELS_SIZES doesn't have the minimum number of elements required to specify the number of channels for all the multiplexers available");
 
+// Matrix switch value storage
 static uint16_t sw_value[MATRIX_ROWS][MATRIX_COLS];
 
+// ADC multiplexer instance
 static adc_mux adcMux;
 
 // Initialize the row pins
@@ -62,17 +69,6 @@ void init_row(void) {
     for (uint8_t idx = 0; idx < MATRIX_ROWS; idx++) {
         gpio_set_pin_output(row_pins[idx]);
         gpio_write_pin_low(row_pins[idx]);
-    }
-}
-
-// Initialize the multiplexers
-void init_amux(void) {
-    for (uint8_t idx = 0; idx < AMUX_COUNT; idx++) {
-        gpio_set_pin_output(amux_en_pins[idx]);
-        gpio_write_pin_low(amux_en_pins[idx]);
-    }
-    for (uint8_t idx = 0; idx < AMUX_SEL_PINS_COUNT; idx++) {
-        gpio_set_pin_output(amux_sel_pins[idx]);
     }
 }
 
@@ -86,23 +82,36 @@ void disable_unused_row(uint8_t row) {
     }
 }
 
-// Select the multiplexer channel of the specified multiplexer
+// Initialize the AMUXs
+void init_amux(void) {
+    // Set all AMUX enable pins as output and disable all AMUXs
+    for (uint8_t idx = 0; idx < AMUX_COUNT; idx++) {
+        gpio_set_pin_output(amux_en_pins[idx]);
+        gpio_write_pin_low(amux_en_pins[idx]);
+    }
+    // Set all AMUX selection pins as output
+    for (uint8_t idx = 0; idx < AMUX_SEL_PINS_COUNT; idx++) {
+        gpio_set_pin_output(amux_sel_pins[idx]);
+    }
+}
+
+// Select the AMUX channel
 void select_amux_channel(uint8_t channel, uint8_t col) {
-    // Get the channel for the specified multiplexer
+    // Get the channel to select
     uint8_t ch = amux_n_col_channels[channel][col];
-    // momentarily disable specified multiplexer
+    // Disable the AMUX before changing the selection
     gpio_write_pin_high(amux_en_pins[channel]);
-    // Select the multiplexer channel
+    // Set the selection pins
     for (uint8_t i = 0; i < AMUX_SEL_PINS_COUNT; i++) {
         gpio_write_pin(amux_sel_pins[i], ch & (1 << i));
     }
-    // re enable specified multiplexer
+    // Enable the AMUX after changing the selection
     gpio_write_pin_low(amux_en_pins[channel]);
 }
 
-// Disable all the unused multiplexers
+// Disable all the unused AMUXs
 void disable_unused_amux(uint8_t channel) {
-    // disable all the other multiplexers apart from the current selected one
+    // disable all the other AMUXs apart from the current selected one
     for (uint8_t idx = 0; idx < AMUX_COUNT; idx++) {
         if (idx != channel) {
             gpio_write_pin_high(amux_en_pins[idx]);
@@ -110,18 +119,9 @@ void disable_unused_amux(uint8_t channel) {
     }
 }
 
-// Discharge the peak hold capacitor
-void discharge_capacitor(void) {
-#ifdef OPEN_DRAIN_SUPPORT
-    gpio_write_pin_low(DISCHARGE_PIN);
-#else
-    gpio_write_pin_low(DISCHARGE_PIN);
-    gpio_set_pin_output(DISCHARGE_PIN);
-#endif
-}
-
 // Charge the peak hold capacitor
 void charge_capacitor(uint8_t row) {
+    // Set the row pin to high state to charge the capacitor
 #ifdef OPEN_DRAIN_SUPPORT
     gpio_write_pin_high(DISCHARGE_PIN);
 #else
@@ -130,16 +130,27 @@ void charge_capacitor(uint8_t row) {
     gpio_write_pin_high(row_pins[row]);
 }
 
-// Initialize the peripherals pins
+// Discharge the peak hold capacitor
+void discharge_capacitor(void) {
+    // Set the discharge pin to low state to discharge the capacitor
+#ifdef OPEN_DRAIN_SUPPORT
+    gpio_write_pin_low(DISCHARGE_PIN);
+#else
+    gpio_write_pin_low(DISCHARGE_PIN);
+    gpio_set_pin_output(DISCHARGE_PIN);
+#endif
+}
+
+// Initialize the EC switch matrix
 int ec_init(void) {
-    // Initialize ADC
+    // Initialize the ADC peripheral
     palSetLineMode(ANALOG_PORT, PAL_MODE_INPUT_ANALOG);
     adcMux = pinToMux(ANALOG_PORT);
 
     // Dummy call to make sure that adcStart() has been called in the appropriate state
     adc_read(adcMux);
 
-    // Initialize discharge pin as discharge mode
+    // Initialize the discharge pin
     gpio_write_pin_low(DISCHARGE_PIN);
 #ifdef OPEN_DRAIN_SUPPORT
     gpio_set_pin_output_open_drain(DISCHARGE_PIN);
@@ -147,7 +158,7 @@ int ec_init(void) {
     gpio_set_pin_output(DISCHARGE_PIN);
 #endif
 
-    // Initialize drive lines
+    // Initialize row pins
     init_row();
 
     // Initialize AMUXs
@@ -156,101 +167,139 @@ int ec_init(void) {
     return 0;
 }
 
-// Get the noise floor
-void ec_noise_floor(void) {
+// Initialize the noise floor and rescale per-key thresholds
+void ec_noise_floor_calibration(void) {
+    // Column offsets for each AMUX
     uint8_t col_offsets[AMUX_COUNT];
     col_offsets[0] = 0;
+    // Calculate column offsets
     for (uint8_t i = 1; i < AMUX_COUNT; i++) {
         col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
     }
 
-    // Initialize the noise floor
+    // Initialize all keys' noise floor to expected value
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.key_state[row][col].noise_floor = 0;
+            runtime_ec_config.runtime_key_state[row][col].noise_floor = EXPECTED_NOISE_FLOOR;
         }
     }
 
-    // Sample the noise floor
+    // Sample multiple times to get an average noise floor
     for (uint8_t i = 0; i < DEFAULT_NOISE_FLOOR_SAMPLING_COUNT; i++) {
+        // Iterate through all AMUXs and columns
         for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
+            // Disable unused AMUXs
             disable_unused_amux(amux);
+            // Iterate through all columns of the current AMUX
             for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
+                // Adjusted column index in the full matrix
                 uint8_t adjusted_col = col + col_offsets[amux];
                 for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                    // Skip unused positions if specified
 #ifdef UNUSED_POSITIONS_LIST
                     if (is_unused_position(row, adjusted_col)) continue;
 #endif
+                    // Disable unused rows
                     disable_unused_row(row);
-                    ec_config.key_state[row][adjusted_col].noise_floor += ec_readkey_raw(amux, row, col);
+                    // Read the raw switch value and accumulate to noise floor
+                    runtime_ec_config.runtime_key_state[row][adjusted_col].noise_floor += ec_readkey_raw(amux, row, col);
                 }
             }
         }
-        wait_ms(10);
+        // Small delay between samples
+        wait_ms(5);
     }
 
-    // Average the noise floor and rescale per-key thresholds
+    // Average the noise floor and rescale thresholds for all keys
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            key_state_t *key = &ec_config.key_state[row][col];
-            key->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
-            rescale_key_thresholds(key);
+            // Get pointer to key state in runtime and EEPROM
+            // Makes code more readable than having the expanded version multiple times
+            runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+            eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+
+            // Average the noise floor
+            key_runtime->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
+            // Rescale all key thresholds based on the new noise floor
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom);
         }
     }
 }
 
-// Scan key values and update matrix state
+// Scan the EC switch matrix
 bool ec_matrix_scan(matrix_row_t current_matrix[]) {
+    // Variable to track if any key state has changed
     bool updated = false;
 
+    // Column offsets for each AMUX
     uint8_t col_offsets[AMUX_COUNT];
     col_offsets[0] = 0;
+    // Calculate column offsets
     for (uint8_t i = 1; i < AMUX_COUNT; i++) {
         col_offsets[i] = col_offsets[i - 1] + amux_n_col_sizes[i - 1];
     }
 
+    // Iterate through all AMUXs and columns
     for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
+        // Disable unused AMUXs
         disable_unused_amux(amux);
         for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
+            // Adjusted column index in the full matrix
             uint8_t adjusted_col = col + col_offsets[amux];
             for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+                // Skip unused positions if specified
 #ifdef UNUSED_POSITIONS_LIST
                 if (is_unused_position(row, adjusted_col)) continue;
 #endif
+                // Disable unused rows
                 disable_unused_row(row);
+                // Read the raw switch value
                 sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
-                key_state_t *key            = &ec_config.key_state[row][adjusted_col];
+                // Get pointer to key state in runtime
+                runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][adjusted_col];
 
-                if (ec_config.bottoming_calibration) {
-                    if (key->bottoming_calibration_starter) {
-                        key->bottoming_reading             = sw_value[row][adjusted_col];
-                        key->bottoming_calibration_starter = false;
-                    } else if (sw_value[row][adjusted_col] > key->bottoming_reading) {
-                        key->bottoming_reading = sw_value[row][adjusted_col];
+                // Handle bottoming calibration or update key state
+
+                // In bottoming calibration mode
+                if (runtime_ec_config.bottoming_calibration) {
+                    // Only track keys that are actually pressed (above noise floor + threshold)
+                    if (sw_value[row][adjusted_col] > key_runtime->noise_floor + BOTTOMING_CALIBRATION_THRESHOLD) {
+                        if (key_runtime->bottoming_calibration_starter) {
+                            // First time seeing this key pressed - initialize with actual pressed value
+                            key_runtime->bottoming_calibration_reading = sw_value[row][adjusted_col];
+                            key_runtime->bottoming_calibration_starter = false;
+                        } else if (sw_value[row][adjusted_col] > key_runtime->bottoming_calibration_reading) {
+                            // Update bottoming reading if current reading is higher
+                            key_runtime->bottoming_calibration_reading = sw_value[row][adjusted_col];
+                        }
                     }
-                } else {
+                } else { // Normal operation mode
+                    // Update the key state and track if any change occurred
                     updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
                 }
             }
         }
     }
 
-    return ec_config.bottoming_calibration ? false : updated;
+    return runtime_ec_config.bottoming_calibration ? false : updated;
 }
 
-// Read the capacitive sensor value
+// Read the raw switch value from specified channel, row, and column
 uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
+    // Variable to store the switch value
     uint16_t sw_value = 0;
 
-    // Select the multiplexer
+    // Select the AMUX channel and column
     select_amux_channel(channel, col);
 
-    // Set the row pin to low state to avoid ghosting
+    // Ensure the row pin is low before starting
     gpio_write_pin_low(row_pins[row]);
 
+    // Atomic block to prevent interruptions during the critical timing section
     ATOMIC_BLOCK_FORCEON {
-        // Set the row pin to high state and have capacitor charge
+        // Charge the peak hold capacitor
         charge_capacitor(row);
+        // Waiting for the capacitor to charge
         wait_us(CHARGE_TIME);
         // Read the ADC value
         sw_value = adc_read(adcMux);
@@ -263,90 +312,98 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     return sw_value;
 }
 
-// Update press/release state of key (supports both EC and MX switches)
+// Update the key state based on the switch value
 bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
-    key_state_t *key      = &ec_config.key_state[row][col];
-    matrix_row_t row_bits = *current_row;
-    bool         pressed  = (row_bits >> col) & 1;
-    bool         changed  = false;
+    // Get pointer to key state in runtime and EEPROM
+    runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+    eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
 
-    // Real Time Noise Floor Calibration
-    if (sw_value + NOISE_FLOOR_THRESHOLD < key->noise_floor) {
-        key->noise_floor = sw_value;
-        rescale_key_thresholds(key);
-    }
+    // Current pressed state
+    bool pressed = (*current_row >> col) & 1;
 
-    // EC switch handling
-    // Normal board-wide APC (mode 0)
-    if (key->actuation_mode == 0) {
-        if (pressed && sw_value < key->rescaled_apc_release_threshold) {
-            row_bits &= ~(1 << col);
-            changed = true;
-        }
-        if ((!pressed) && sw_value > key->rescaled_apc_actuation_threshold) {
-            row_bits |= (1 << col);
-            changed = true;
-        }
-    }
-    // Rapid Trigger (mode 1)
-    else if (key->actuation_mode == 1) {
-        // Is key in active zone?
-        if (sw_value > key->rescaled_rt_initial_deadzone_offset) {
-            // Is key pressed while in active zone?
-            if (pressed) {
-                // Is the key still moving down?
-                if (sw_value > key->extremum) {
-                    key->extremum = sw_value;
-                }
-                // Has key moved up enough to be released?
-                else if (sw_value < key->extremum - key->rescaled_rt_release_offset) {
-                    key->extremum = sw_value;
-                    row_bits &= ~(1 << col);
-                    changed = true;
-                }
-            }
-            // Key is not pressed while in active zone
-            else {
-                // Is the key still moving up?
-                if (sw_value < key->extremum) {
-                    key->extremum = sw_value;
-                }
-                // Has key moved down enough to be pressed?
-                else if (sw_value > key->extremum + key->rescaled_rt_actuation_offset) {
-                    key->extremum = sw_value;
-                    row_bits |= (1 << col);
-                    changed = true;
-                }
-            }
-        }
-        // Key is not in active zone
-        else {
-            // Check to avoid key being stuck in pressed state near the active zone threshold
-            if (sw_value < key->extremum) {
-                key->extremum = sw_value;
-                row_bits &= ~(1 << col);
-                changed = true;
-            }
-        }
+    // Update noise floor if current reading is lower than existing noise floor minus threshold
+    if (sw_value + NOISE_FLOOR_THRESHOLD < key_runtime->noise_floor) {
+        // Update noise floor
+        key_runtime->noise_floor = sw_value;
+        // Rescale all key thresholds based on new noise floor
+        bulk_rescale_key_thresholds(key_runtime, key_eeprom);
     }
 
-    if (changed) {
-        *current_row = row_bits;
+    // Update key state based on actuation mode
+    if (key_runtime->actuation_mode == 0) {
+        return ec_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
+    } else if (key_runtime->actuation_mode == 1) {
+        return ec_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
     }
-    return changed;
+
+    return false;
 }
 
-// Rescale per-key thresholds based on noise floor and bottoming reading
-void rescale_key_thresholds(key_state_t *key) {
-    key->rescaled_apc_actuation_threshold    = rescale(key->apc_actuation_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_apc_release_threshold      = rescale(key->apc_release_threshold, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_initial_deadzone_offset = rescale(key->rt_initial_deadzone_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_actuation_offset        = rescale(key->rt_actuation_offset, key->noise_floor, key->bottoming_reading);
-    key->rescaled_rt_release_offset          = rescale(key->rt_release_offset, key->noise_floor, key->bottoming_reading);
-    key->extremum                            = key->noise_floor;
+// Update the key state in APC mode
+bool ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
+    // Check for release condition
+    if (pressed && sw_value < key_runtime->rescaled_apc_release_threshold) {
+        // Key released
+        *current_row &= ~(1 << col);
+        return true;
+    }
+    // Check for actuation condition
+    else if (!pressed && sw_value > key_runtime->rescaled_apc_actuation_threshold) {
+        *current_row |= (1 << col);
+        return true;
+    }
+
+    return false;
 }
 
-// Print the matrix values
+// Update the key state in RT mode
+bool ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
+    // Key in active zone
+    if (sw_value > key_runtime->rescaled_rt_initial_deadzone_offset) {
+        if (pressed) {
+            // Track downward movement
+            if (sw_value > key_runtime->extremum) {
+                key_runtime->extremum = sw_value;
+            }
+            // Check for release threshold
+            else if (sw_value < key_runtime->extremum - key_runtime->rescaled_rt_release_offset) {
+                key_runtime->extremum = sw_value;
+                *current_row &= ~(1 << col);
+                return true;
+            }
+        } else {
+            // Track upward movement
+            if (sw_value < key_runtime->extremum) {
+                key_runtime->extremum = sw_value;
+            }
+            // Check for actuation threshold
+            else if (sw_value > key_runtime->extremum + key_runtime->rescaled_rt_actuation_offset) {
+                key_runtime->extremum = sw_value;
+                *current_row |= (1 << col);
+                return true;
+            }
+        }
+    }
+    // Key outside active zone - force release if extremum dropped
+    else if (sw_value < key_runtime->extremum) {
+        key_runtime->extremum = sw_value;
+        *current_row &= ~(1 << col);
+        return true;
+    }
+
+    return false;
+}
+
+// Rescale all thresholds for a singular key
+void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom) {
+    key_runtime->rescaled_apc_actuation_threshold    = rescale(key_runtime->apc_actuation_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+    key_runtime->rescaled_apc_release_threshold      = rescale(key_runtime->apc_release_threshold, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+    key_runtime->rescaled_rt_initial_deadzone_offset = rescale(key_runtime->rt_initial_deadzone_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+    key_runtime->rescaled_rt_actuation_offset        = rescale(key_runtime->rt_actuation_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+    key_runtime->rescaled_rt_release_offset          = rescale(key_runtime->rt_release_offset, key_runtime->noise_floor, key_eeprom->bottoming_calibration_reading);
+}
+
+// Print the switch matrix values for debugging
 void ec_print_matrix(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS - 1; col++) {
@@ -357,10 +414,17 @@ void ec_print_matrix(void) {
     print("\n");
 }
 
-// Check if the position is unused
+// rescale a value from 0-1023 to out_min - out_max
+uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
+    return x * (out_max - out_min) / 1023 + out_min;
+}
+
+// Check if a position is unused (if UNUSED_POSITIONS_LIST is defined)
 #ifdef UNUSED_POSITIONS_LIST
 bool is_unused_position(uint8_t row, uint8_t col) {
+    // Check against the list of unused positions
     for (uint8_t i = 0; i < UNUSED_POSITIONS_COUNT; i++) {
+        // Compare current position with each unused position
         if (UNUSED_POSITIONS[i][0] == row && UNUSED_POSITIONS[i][1] == col) {
             return true;
         }
@@ -368,8 +432,3 @@ bool is_unused_position(uint8_t row, uint8_t col) {
     return false;
 }
 #endif
-
-// Rescale the value to a different range
-uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x * (out_max - out_min) / 1023 + out_min;
-}

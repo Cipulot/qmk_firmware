@@ -1,4 +1,4 @@
-/* Copyright 2025 Cipulot
+/* Copyright 2026 Cipulot
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,10 +107,10 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
     if (ec_config.bottoming_calibration) {
         if (ec_config.bottoming_calibration_starter) {
-            ec_config.bottoming_reading             = sw_value;
+            ec_config.bottoming_calibration_reading             = sw_value;
             ec_config.bottoming_calibration_starter = false;
-        } else if (sw_value > ec_config.bottoming_reading) {
-            ec_config.bottoming_reading = sw_value;
+        } else if (sw_value > ec_config.bottoming_calibration_reading) {
+            ec_config.bottoming_calibration_reading = sw_value;
         }
     } else {
         updated |= ec_update_key(&current_matrix[0], sw_value);
@@ -148,9 +148,9 @@ bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
     if (sw_value < (ec_config.noise_floor - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d\n", sw_value);
         ec_config.noise_floor                             = sw_value;
-        ec_config.rescaled_apc_actuation_threshold     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_apc_release_threshold       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
-        ec_config.rescaled_rt_initial_deadzone_offset = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_reading);
+        ec_config.rescaled_apc_actuation_threshold     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
+        ec_config.rescaled_apc_release_threshold       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
+        ec_config.rescaled_rt_initial_deadzone_offset = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
     }
 
     // Normal board-wide APC
