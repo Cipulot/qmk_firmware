@@ -20,6 +20,7 @@
 #include "math.h"
 #include "print.h"
 #include "wait.h"
+#include <string.h>
 
 #if defined(__AVR__)
 #    error "AVR platforms not supported due to a variety of reasons. Among them there are limited memory, limited number of pins and ADC not being able to give satisfactory results."
@@ -417,6 +418,41 @@ void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_st
         default:
             bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
             break;
+    }
+}
+
+// Unified helper function to update a field across all keys
+void ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            // Update runtime
+            uint8_t *runtime_field = (uint8_t *)&runtime_ec_config.runtime_key_state[row][col] + runtime_offset;
+            memcpy(runtime_field, value, field_size);
+
+            if (mode != EC_UPDATE_RUNTIME_ONLY) {
+                // Determine EEPROM offset: shared or dual
+                size_t effective_eeprom_offset = (mode == EC_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
+
+                // Update EEPROM in-memory
+                uint8_t *eeprom_field = (uint8_t *)&eeprom_ec_config.eeprom_key_state[row][col] + effective_eeprom_offset;
+                memcpy(eeprom_field, value, field_size);
+
+                // Persist only the specific field bytes to EEPROM
+                uint32_t eeprom_addr = offsetof(eeprom_ec_config_t, eeprom_key_state) + (row * MATRIX_COLS + col) * sizeof(eeprom_key_state_t) + effective_eeprom_offset;
+
+                switch (field_size) {
+                    case 1: // bool or uint8_t
+                        eeconfig_update_kb_datablock_byte(eeprom_addr, *(const uint8_t *)value);
+                        break;
+                    case 2: { // uint16_t
+                        uint16_t v = *(const uint16_t *)value;
+                        eeconfig_update_kb_datablock_byte(eeprom_addr, v & 0xFF);
+                        eeconfig_update_kb_datablock_byte(eeprom_addr + 1, (v >> 8) & 0xFF);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 

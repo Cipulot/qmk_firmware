@@ -17,6 +17,7 @@
 #include "action.h"
 #include "print.h"
 #include "via.h"
+#include <string.h>
 
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
@@ -81,15 +82,8 @@ void via_config_set_value(uint8_t *data) {
     switch (*value_id) {
         case id_actuation_mode: {
             uint8_t value = value_data[0];
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime and EEPROM
-                    runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
-                    eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
-                    key_runtime->actuation_mode      = value;
-                    key_eeprom->actuation_mode       = value;
-                }
-            }
+            // Update only the per-key actuation_mode field in runtime and EEPROM (shared offset)
+            ec_update_keys_field(EC_UPDATE_SHARED_OFFSET, offsetof(runtime_key_state_t, actuation_mode), 0, &value, sizeof(uint8_t));
             if (value == 0) {
                 uprintf("#########################\n");
                 uprintf("#  Actuation Mode: APC  #\n");
@@ -99,66 +93,35 @@ void via_config_set_value(uint8_t *data) {
                 uprintf("# Actuation Mode: Rapid Trigger #\n");
                 uprintf("#################################\n");
             }
-            eeconfig_update_kb_datablock_field(eeprom_ec_config, eeprom_key_state);
             break;
         }
         case id_apc_actuation_threshold: {
             uint16_t value = value_data[0] | (value_data[1] << 8);
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime
-                    runtime_key_state_t *key_runtime     = &runtime_ec_config.runtime_key_state[row][col];
-                    key_runtime->apc_actuation_threshold = value;
-                }
-            }
+            ec_update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, apc_actuation_threshold), 0, &value, sizeof(uint16_t));
             uprintf("APC Mode Actuation Threshold: %d\n", value);
             break;
         }
         case id_apc_release_threshold: {
             uint16_t value = value_data[0] | (value_data[1] << 8);
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime
-                    runtime_key_state_t *key_runtime   = &runtime_ec_config.runtime_key_state[row][col];
-                    key_runtime->apc_release_threshold = value;
-                }
-            }
+            ec_update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, apc_release_threshold), 0, &value, sizeof(uint16_t));
             uprintf("APC Mode Release Threshold: %d\n", value);
             break;
         }
         case id_rt_initial_deadzone_offset: {
             uint16_t value = value_data[0] | (value_data[1] << 8);
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime
-                    runtime_key_state_t *key_runtime        = &runtime_ec_config.runtime_key_state[row][col];
-                    key_runtime->rt_initial_deadzone_offset = value;
-                }
-            }
+            ec_update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, rt_initial_deadzone_offset), 0, &value, sizeof(uint16_t));
             uprintf("Rapid Trigger Mode Initial Deadzone Offset: %d\n", value);
             break;
         }
         case id_rt_actuation_offset: {
             uint8_t value = value_data[0];
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime
-                    runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
-                    key_runtime->rt_actuation_offset = value;
-                }
-            }
+            ec_update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, rt_actuation_offset), 0, &value, sizeof(uint8_t));
             uprintf("Rapid Trigger Mode Actuation Offset: %d\n", value);
             break;
         }
         case id_rt_release_offset: {
             uint8_t value = value_data[0];
-            for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-                for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-                    // Get pointer to key state in runtime
-                    runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
-                    key_runtime->rt_release_offset   = value;
-                }
-            }
+            ec_update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, rt_release_offset), 0, &value, sizeof(uint8_t));
             uprintf("Rapid Trigger Mode Release Offset: %d\n", value);
             break;
         }
@@ -418,8 +381,8 @@ static void ec_save_threshold_data(uint8_t option) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             for (uint8_t col = 0; col < MATRIX_COLS; col++) {
                 // Get pointer to key state in runtime and EEPROM
-                runtime_key_state_t *key_runtime    = &runtime_ec_config.runtime_key_state[row][col];
-                eeprom_key_state_t  *key_eeprom     = &eeprom_ec_config.eeprom_key_state[row][col];
+                runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+                eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
                 key_eeprom->apc_actuation_threshold = key_runtime->apc_actuation_threshold;
                 key_eeprom->apc_release_threshold   = key_runtime->apc_release_threshold;
                 // Rescale key thresholds based on new APC values
@@ -598,6 +561,10 @@ static void ec_clear_bottoming_calibration_data(void) {
     uprintf("# Bottoming calibration data cleared #\n");
     uprintf("######################################\n");
 }
+
+// Helper function to update a field for all keys in both runtime and EEPROM
+// This efficiently writes only the specific field bytes instead of the entire key state array
+// (moved) ec_update_keys_field is now defined in ec_switch_matrix.c
 
 // Handle the SOCD pairs configuration
 static uint16_t socd_pair_handler(bool mode, uint8_t pair_idx, uint8_t field, uint16_t value) {
