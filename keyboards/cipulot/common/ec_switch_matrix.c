@@ -222,7 +222,7 @@ void ec_noise_floor_calibration(void) {
             // Average the noise floor
             key_runtime->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
             // Rescale all key thresholds based on the new noise floor
-            bulk_rescale_key_thresholds(key_runtime, key_eepromm, RESCALE_MODE_ALL);
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
         }
     }
 }
@@ -421,7 +421,7 @@ void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_st
     }
 }
 
-// Unified helper function to update a field across all keys
+// Unified helper function to update a field across all keys (runtime-only)
 void ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -436,22 +436,33 @@ void ec_update_keys_field(ec_update_mode_t mode, size_t runtime_offset, size_t e
                 // Update EEPROM in-memory
                 uint8_t *eeprom_field = (uint8_t *)&eeprom_ec_config.eeprom_key_state[row][col] + effective_eeprom_offset;
                 memcpy(eeprom_field, value, field_size);
-
-                // Persist only the specific field bytes to EEPROM
-                uint32_t eeprom_addr = offsetof(eeprom_ec_config_t, eeprom_key_state) + (row * MATRIX_COLS + col) * sizeof(eeprom_key_state_t) + effective_eeprom_offset;
-
-                switch (field_size) {
-                    case 1: // bool or uint8_t
-                        eeconfig_update_kb_datablock_byte(eeprom_addr, *(const uint8_t *)value);
-                        break;
-                    case 2: { // uint16_t
-                        uint16_t v = *(const uint16_t *)value;
-                        eeconfig_update_kb_datablock_byte(eeprom_addr, v & 0xFF);
-                        eeconfig_update_kb_datablock_byte(eeprom_addr + 1, (v >> 8) & 0xFF);
-                        break;
-                    }
-                }
             }
+        }
+    }
+}
+
+// Update a field across all keys and immediately rescale thresholds (runtime-only or in-memory EEPROM)
+void ec_update_keys_field_rescale(ec_update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size, rescale_mode_t rescale_mode) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+            eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+
+            // Update runtime
+            uint8_t *runtime_field = (uint8_t *)key_runtime + runtime_offset;
+            memcpy(runtime_field, value, field_size);
+
+            if (mode != EC_UPDATE_RUNTIME_ONLY) {
+                // Determine EEPROM offset: shared or dual
+                size_t effective_eeprom_offset = (mode == EC_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
+
+                // Update EEPROM in-memory
+                uint8_t *eeprom_field = (uint8_t *)key_eeprom + effective_eeprom_offset;
+                memcpy(eeprom_field, value, field_size);
+            }
+
+            // Immediately rescale thresholds for this key
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, rescale_mode);
         }
     }
 }

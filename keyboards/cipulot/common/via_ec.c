@@ -84,6 +84,7 @@ void via_config_set_value(uint8_t *data) {
             uint8_t value = value_data[0];
             // Update only the per-key actuation_mode field in runtime and EEPROM (shared offset)
             ec_update_keys_field(EC_UPDATE_SHARED_OFFSET, offsetof(runtime_key_state_t, actuation_mode), 0, &value, sizeof(uint8_t));
+            eeconfig_update_kb_datablock_field(eeprom_ec_config, eeprom_key_state);
             if (value == 0) {
                 uprintf("#########################\n");
                 uprintf("#  Actuation Mode: APC  #\n");
@@ -561,10 +562,6 @@ static void ec_clear_bottoming_calibration_data(void) {
     uprintf("# Bottoming calibration data cleared #\n");
     uprintf("######################################\n");
 }
-
-// Helper function to update a field for all keys in both runtime and EEPROM
-// This efficiently writes only the specific field bytes instead of the entire key state array
-// (moved) ec_update_keys_field is now defined in ec_switch_matrix.c
 
 // Handle the SOCD pairs configuration
 static uint16_t socd_pair_handler(bool mode, uint8_t pair_idx, uint8_t field, uint16_t value) {
