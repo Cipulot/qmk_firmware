@@ -56,7 +56,7 @@
 #define CHARGE_TIME 1
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 111
+#define EECONFIG_KB_DATA_SIZE (20 + (11 * MATRIX_ROWS * MATRIX_COLS))
 
 /* solenoid stuff */
 #define SOLENOID_PIN B2

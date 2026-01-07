@@ -19,28 +19,22 @@
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 14
 
-#define UNUSED_POSITIONS_LIST { {3, 13}, {4, 3}, {4, 4}, {4, 6}, {4, 7}, {4, 8}, {4, 9}, {4, 13} }
+#define UNUSED_POSITIONS_LIST {{3, 13}, {4, 3}, {4, 4}, {4, 6}, {4, 7}, {4, 8}, {4, 9}, {4, 13}}
 
-#define MATRIX_ROW_PINS \
-    { B13, B14, B15, A8, A15 }
+#define MATRIX_ROW_PINS {B13, B14, B15, A8, A15}
 
 #define AMUX_COUNT 2
 #define AMUX_MAX_COLS_COUNT 8
 
-#define AMUX_EN_PINS \
-    { B7, B3 }
+#define AMUX_EN_PINS {B7, B3}
 
-#define AMUX_SEL_PINS \
-    { B6, B5, B4 }
+#define AMUX_SEL_PINS {B6, B5, B4}
 
-#define AMUX_COL_CHANNELS_SIZES \
-    { 8, 6 }
+#define AMUX_COL_CHANNELS_SIZES {8, 6}
 
-#define AMUX_0_COL_CHANNELS \
-    { 0, 3, 1, 2, 4, 5, 6, 7 }
+#define AMUX_0_COL_CHANNELS {0, 3, 1, 2, 4, 5, 6, 7}
 
-#define AMUX_1_COL_CHANNELS \
-    { 0, 3, 1, 2, 4, 5 }
+#define AMUX_1_COL_CHANNELS {0, 3, 1, 2, 4, 5}
 
 #define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS, AMUX_1_COL_CHANNELS
 
@@ -64,4 +58,4 @@
 #define CHARGE_TIME 1
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 169
+#define EECONFIG_KB_DATA_SIZE (20 + (11 * MATRIX_ROWS * MATRIX_COLS))

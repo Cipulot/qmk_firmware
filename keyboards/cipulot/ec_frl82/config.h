@@ -58,7 +58,7 @@
 #define CHARGE_TIME 1
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE 2300
+#define EECONFIG_KB_DATA_SIZE (20 + (11 * MATRIX_ROWS * MATRIX_COLS))
 
 // PWM driver with direct memory access (DMA) support
 #define WS2812_PWM_COMPLEMENTARY_OUTPUT
