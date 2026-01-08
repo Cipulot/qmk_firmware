@@ -59,7 +59,6 @@ enum via_enums {
     id_socd_pair_4_mode = 21,
     id_socd_pair_4_key_1 = 22,
     id_socd_pair_4_key_2 = 23,
-
     // clang-format on
 };
 
@@ -94,19 +93,19 @@ void via_config_set_value(uint8_t *data) {
             break;
         }
         case id_apc_actuation_threshold: {
-            uint16_t value = value_data[0] | (value_data[1] << 8);
+            uint16_t value = value_data[1] | (value_data[0] << 8);
             update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, apc_actuation_threshold), 0, &value, sizeof(uint16_t));
             uprintf("APC Mode Actuation Threshold: %d\n", value);
             break;
         }
         case id_apc_release_threshold: {
-            uint16_t value = value_data[0] | (value_data[1] << 8);
+            uint16_t value = value_data[1] | (value_data[0] << 8);
             update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, apc_release_threshold), 0, &value, sizeof(uint16_t));
             uprintf("APC Mode Release Threshold: %d\n", value);
             break;
         }
         case id_rt_initial_deadzone_offset: {
-            uint16_t value = value_data[0] | (value_data[1] << 8);
+            uint16_t value = value_data[1] | (value_data[0] << 8);
             update_keys_field(EC_UPDATE_RUNTIME_ONLY, offsetof(runtime_key_state_t, rt_initial_deadzone_offset), 0, &value, sizeof(uint16_t));
             uprintf("Rapid Trigger Mode Initial Deadzone Offset: %d\n", value);
             break;
