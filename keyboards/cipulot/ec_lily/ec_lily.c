@@ -15,13 +15,15 @@
  */
 
 #include "ec_switch_matrix.h"
-#include "quantum.h"
+#include "keyboard.h"
 
-// Definition of SOCD shared instance
-socd_cleaner_t socd_opposing_pairs[4];
+#ifdef SPLIT_KEYBOARD
+#    include "transactions.h"
+#endif
 
+// EEPROM default initialization
 void eeconfig_init_kb(void) {
-    // Default values
+    // Initialize indicator defaults
     eeprom_ec_config.ind1.h       = 0;
     eeprom_ec_config.ind1.s       = 255;
     eeprom_ec_config.ind1.v       = 150;
@@ -43,16 +45,18 @@ void eeconfig_init_kb(void) {
     eeprom_ec_config.ind3.index   = 2;
     eeprom_ec_config.ind3.enabled = true;
 
-    eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_ec_config.apc_actuation_threshold     = DEFAULT_APC_ACTUATION_LEVEL;
-    eeprom_ec_config.apc_release_threshold       = DEFAULT_APC_RELEASE_LEVEL;
-    eeprom_ec_config.rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
-    eeprom_ec_config.rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
-    eeprom_ec_config.rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
-
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.bottoming_calibration_reading[row][col] = DEFAULT_BOTTOMING_CALIBRATION_READING;
+            // Get pointer to key state in EEPROM
+            eeprom_key_state_t *key_eeprom = &eeprom_ec_config.eeprom_key_state[row][col];
+            // Set default values
+            key_eeprom->actuation_mode                = DEFAULT_ACTUATION_MODE;
+            key_eeprom->apc_actuation_threshold       = DEFAULT_APC_ACTUATION_LEVEL;
+            key_eeprom->apc_release_threshold         = DEFAULT_APC_RELEASE_LEVEL;
+            key_eeprom->rt_initial_deadzone_offset    = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+            key_eeprom->rt_actuation_offset           = DEFAULT_RT_ACTUATION_OFFSET;
+            key_eeprom->rt_release_offset             = DEFAULT_RT_RELEASE_OFFSET;
+            key_eeprom->bottoming_calibration_reading = DEFAULT_BOTTOMING_CALIBRATION_READING;
         }
     }
 
@@ -67,46 +71,57 @@ void eeconfig_init_kb(void) {
         {KC_LEFT, KC_RIGHT},
     };
 
+    // Copy default SOCD pairs to EEPROM
     for (int i = 0; i < 4; i++) {
-        eeprom_ec_config.socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
-        eeprom_ec_config.socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
-        eeprom_ec_config.socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
-        eeprom_ec_config.socd_opposing_pairs[i].held[0]    = false;
-        eeprom_ec_config.socd_opposing_pairs[i].held[1]    = false;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].held[0]    = false;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].held[1]    = false;
     }
 
-    // Write default value to EEPROM now
+    // Write to EEPROM entire datablock
     eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
+    // Call user initialization
     eeconfig_init_user();
 }
 
-// On Keyboard startup
+// Keyboard post-initialization
 void keyboard_post_init_kb(void) {
-    // Read custom menu variables from memory
+    // Read the EEPROM data block
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    // Set runtime values to EEPROM values
-    ec_config.actuation_mode                 = eeprom_ec_config.actuation_mode;
-    ec_config.apc_actuation_threshold     = eeprom_ec_config.apc_actuation_threshold;
-    ec_config.apc_release_threshold       = eeprom_ec_config.apc_release_threshold;
-    ec_config.rt_initial_deadzone_offset = eeprom_ec_config.rt_initial_deadzone_offset;
-    ec_config.rt_actuation_offset        = eeprom_ec_config.rt_actuation_offset;
-    ec_config.rt_release_offset          = eeprom_ec_config.rt_release_offset;
-    ec_config.bottoming_calibration          = false;
+    runtime_ec_config.bottoming_calibration = false;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.bottoming_calibration_starter[row][col]           = true;
-            ec_config.bottoming_calibration_reading[row][col]                       = eeprom_ec_config.bottoming_calibration_reading[row][col];
-            ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_actuation_offset[row][col]        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_release_offset[row][col]          = rescale(ec_config.rt_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            // Get pointer to key state in runtime and EEPROM
+            runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+            eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+
+            // Copy from EEPROM to runtime
+            key_runtime->actuation_mode                = key_eeprom->actuation_mode;
+            key_runtime->apc_actuation_threshold       = key_eeprom->apc_actuation_threshold;
+            key_runtime->apc_release_threshold         = key_eeprom->apc_release_threshold;
+            key_runtime->rt_initial_deadzone_offset    = key_eeprom->rt_initial_deadzone_offset;
+            key_runtime->rt_actuation_offset           = key_eeprom->rt_actuation_offset;
+            key_runtime->rt_release_offset             = key_eeprom->rt_release_offset;
+            key_runtime->bottoming_calibration_reading = key_eeprom->bottoming_calibration_reading;
+            key_runtime->extremum                      = DEFAULT_EXTREMUM;
+            key_runtime->bottoming_calibration_starter = DEFAULT_CALIBRATION_STARTER;
+
+            // Rescale all key thresholds based on noise floor and bottoming reading
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
         }
     }
+    // Register RPC handler for VIA commands if split keyboard
+#ifdef SPLIT_KEYBOARD
+    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+#endif
 
-    memcpy(socd_opposing_pairs, eeprom_ec_config.socd_opposing_pairs, sizeof(socd_opposing_pairs));
+    // Copy SOCD cleaner pairs to runtime instance
+    memcpy(socd_opposing_pairs, eeprom_ec_config.eeprom_socd_opposing_pairs, sizeof(socd_opposing_pairs));
 
     // Set the RGB LEDs range that will be used for the effects
     rgblight_set_effect_range(3, 1);
@@ -114,6 +129,7 @@ void keyboard_post_init_kb(void) {
     // Call the indicator callback to set the indicator color
     indicators_callback();
 
+    // Call user post-initialization
     keyboard_post_init_user();
 }
 
@@ -176,7 +192,7 @@ bool set_indicator(indicator_config indicator) {
 
 bool indicators_callback(void) {
     // Basic functioning: for each indicator, set_indicator is used to decide if the current indicator should be lit or off.
-    indicator_config* current_indicator_p;
+    indicator_config *current_indicator_p;
     int               index;
     RGB               color;
     for (index = 0; index < 3; index++) {
