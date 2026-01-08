@@ -88,7 +88,6 @@ void keyboard_post_init_kb(void) {
             key_runtime->rt_actuation_offset           = key_eeprom->rt_actuation_offset;
             key_runtime->rt_release_offset             = key_eeprom->rt_release_offset;
             key_runtime->bottoming_calibration_reading = key_eeprom->bottoming_calibration_reading;
-            key_runtime->noise_floor                   = EXPECTED_NOISE_FLOOR;
             key_runtime->extremum                      = DEFAULT_EXTREMUM;
             key_runtime->bottoming_calibration_starter = DEFAULT_CALIBRATION_STARTER;
 
