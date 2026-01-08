@@ -15,35 +15,48 @@
  */
 
 #include "ec_switch_matrix.h"
-#include "quantum.h"
+#include "keyboard.h"
 
-// Definition of SOCD shared instance
-socd_cleaner_t socd_opposing_pairs[4];
+#ifdef SPLIT_KEYBOARD
+#    include "transactions.h"
+#endif
 
+// EEPROM default initialization
 void eeconfig_init_kb(void) {
-    // Default values
-    eeprom_ec_config.num.h                          = 0;
-    eeprom_ec_config.num.s                          = 0;
-    eeprom_ec_config.num.v                          = 60;
-    eeprom_ec_config.num.enabled                    = true;
-    eeprom_ec_config.caps.h                         = 0;
-    eeprom_ec_config.caps.s                         = 0;
-    eeprom_ec_config.caps.v                         = 60;
-    eeprom_ec_config.caps.enabled                   = true;
-    eeprom_ec_config.scroll.h                       = 0;
-    eeprom_ec_config.scroll.s                       = 0;
-    eeprom_ec_config.scroll.v                       = 60;
-    eeprom_ec_config.scroll.enabled                 = true;
-    eeprom_ec_config.actuation_mode                 = DEFAULT_ACTUATION_MODE;
-    eeprom_ec_config.apc_actuation_threshold     = DEFAULT_APC_ACTUATION_LEVEL;
-    eeprom_ec_config.apc_release_threshold       = DEFAULT_APC_RELEASE_LEVEL;
-    eeprom_ec_config.rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
-    eeprom_ec_config.rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
-    eeprom_ec_config.rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
+    // Initialize indicator defaults
+    eeprom_ec_config.ind1.h       = 0;
+    eeprom_ec_config.ind1.s       = 255;
+    eeprom_ec_config.ind1.v       = 150;
+    eeprom_ec_config.ind1.func    = 0x04;
+    eeprom_ec_config.ind1.index   = 0;
+    eeprom_ec_config.ind1.enabled = true;
+
+    eeprom_ec_config.ind2.h       = 86;
+    eeprom_ec_config.ind2.s       = 255;
+    eeprom_ec_config.ind2.v       = 150;
+    eeprom_ec_config.ind2.func    = 0x04;
+    eeprom_ec_config.ind2.index   = 1;
+    eeprom_ec_config.ind2.enabled = true;
+
+    eeprom_ec_config.ind3.h       = 166;
+    eeprom_ec_config.ind3.s       = 254;
+    eeprom_ec_config.ind3.v       = 150;
+    eeprom_ec_config.ind3.func    = 0x04;
+    eeprom_ec_config.ind3.index   = 2;
+    eeprom_ec_config.ind3.enabled = true;
 
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            eeprom_ec_config.bottoming_calibration_reading[row][col] = DEFAULT_BOTTOMING_CALIBRATION_READING;
+            // Get pointer to key state in EEPROM
+            eeprom_key_state_t *key_eeprom = &eeprom_ec_config.eeprom_key_state[row][col];
+            // Set default values
+            key_eeprom->actuation_mode                = DEFAULT_ACTUATION_MODE;
+            key_eeprom->apc_actuation_threshold       = DEFAULT_APC_ACTUATION_LEVEL;
+            key_eeprom->apc_release_threshold         = DEFAULT_APC_RELEASE_LEVEL;
+            key_eeprom->rt_initial_deadzone_offset    = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+            key_eeprom->rt_actuation_offset           = DEFAULT_RT_ACTUATION_OFFSET;
+            key_eeprom->rt_release_offset             = DEFAULT_RT_RELEASE_OFFSET;
+            key_eeprom->bottoming_calibration_reading = DEFAULT_BOTTOMING_CALIBRATION_READING;
         }
     }
 
@@ -58,90 +71,143 @@ void eeconfig_init_kb(void) {
         {KC_LEFT, KC_RIGHT},
     };
 
+    // Copy default SOCD pairs to EEPROM
     for (int i = 0; i < 4; i++) {
-        eeprom_ec_config.socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
-        eeprom_ec_config.socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
-        eeprom_ec_config.socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
-        eeprom_ec_config.socd_opposing_pairs[i].held[0]    = false;
-        eeprom_ec_config.socd_opposing_pairs[i].held[1]    = false;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].keys[0]    = socd_pairs[i].key1;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].keys[1]    = socd_pairs[i].key2;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].resolution = SOCD_CLEANER_OFF;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].held[0]    = false;
+        eeprom_ec_config.eeprom_socd_opposing_pairs[i].held[1]    = false;
     }
 
-    // Write default value to EEPROM now
+    // Write to EEPROM entire datablock
     eeconfig_update_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
+    // Call user initialization
     eeconfig_init_user();
 }
 
-// On Keyboard startup
+// Keyboard post-initialization
 void keyboard_post_init_kb(void) {
-    // Read custom menu variables from memory
+    // Read the EEPROM data block
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    // Set runtime values to EEPROM values
-    ec_config.actuation_mode                 = eeprom_ec_config.actuation_mode;
-    ec_config.apc_actuation_threshold     = eeprom_ec_config.apc_actuation_threshold;
-    ec_config.apc_release_threshold       = eeprom_ec_config.apc_release_threshold;
-    ec_config.rt_initial_deadzone_offset = eeprom_ec_config.rt_initial_deadzone_offset;
-    ec_config.rt_actuation_offset        = eeprom_ec_config.rt_actuation_offset;
-    ec_config.rt_release_offset          = eeprom_ec_config.rt_release_offset;
-    ec_config.bottoming_calibration          = false;
+    runtime_ec_config.bottoming_calibration = false;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            ec_config.bottoming_calibration_starter[row][col]           = true;
-            ec_config.bottoming_calibration_reading[row][col]                       = eeprom_ec_config.bottoming_calibration_reading[row][col];
-            ec_config.rescaled_apc_actuation_threshold[row][col]     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_apc_release_threshold[row][col]       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_initial_deadzone_offset[row][col] = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_actuation_offset[row][col]        = rescale(ec_config.rt_actuation_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
-            ec_config.rescaled_rt_release_offset[row][col]          = rescale(ec_config.rt_release_offset, ec_config.noise_floor[row][col], eeprom_ec_config.bottoming_calibration_reading[row][col]);
+            // Get pointer to key state in runtime and EEPROM
+            runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
+            eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+
+            // Copy from EEPROM to runtime
+            key_runtime->actuation_mode                = key_eeprom->actuation_mode;
+            key_runtime->apc_actuation_threshold       = key_eeprom->apc_actuation_threshold;
+            key_runtime->apc_release_threshold         = key_eeprom->apc_release_threshold;
+            key_runtime->rt_initial_deadzone_offset    = key_eeprom->rt_initial_deadzone_offset;
+            key_runtime->rt_actuation_offset           = key_eeprom->rt_actuation_offset;
+            key_runtime->rt_release_offset             = key_eeprom->rt_release_offset;
+            key_runtime->bottoming_calibration_reading = key_eeprom->bottoming_calibration_reading;
+            key_runtime->extremum                      = DEFAULT_EXTREMUM;
+            key_runtime->bottoming_calibration_starter = DEFAULT_CALIBRATION_STARTER;
+
+            // Rescale all key thresholds based on noise floor and bottoming reading
+            bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
         }
     }
+    // Register RPC handler for VIA commands if split keyboard
+#ifdef SPLIT_KEYBOARD
+    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+#endif
+
+    // Copy SOCD cleaner pairs to runtime instance
+    memcpy(socd_opposing_pairs, eeprom_ec_config.eeprom_socd_opposing_pairs, sizeof(socd_opposing_pairs));
+
+    // Set the RGB LEDs range that will be used for the effects
+    rgblight_set_effect_range(3, 1);
 
     // Call the indicator callback to set the indicator color
-    rgb_matrix_indicators_kb();
+    indicators_callback();
 
-    memcpy(socd_opposing_pairs, eeprom_ec_config.socd_opposing_pairs, sizeof(socd_opposing_pairs));
-
+    // Call user post-initialization
     keyboard_post_init_user();
 }
 
-// INDICATOR CALLBACK ------------------------------------------------------------------------------
-/* LED index to physical position
- *
- * LED0 | LED1 |  LED2
- * -----+------+--------
- * Num  | Caps | Scroll |
- */
-bool rgb_matrix_indicators_kb(void) {
-    if (!rgb_matrix_indicators_user()) {
-        return false;
-    }
+// This function gets called when caps, num, scroll change
+bool led_update_kb(led_t led_state) {
+    indicators_callback();
+    return true;
+}
 
-    if (eeprom_ec_config.num.enabled) {
-        // The rgb_matrix_set_color function needs an RGB code to work, so first the indicator color is cast to an HSV value and then translated to RGB
-        hsv_t hsv_num_indicator_color = {eeprom_ec_config.num.h, eeprom_ec_config.num.s, eeprom_ec_config.num.v};
-        rgb_t rgb_num_indicator_color = hsv_to_rgb(hsv_num_indicator_color);
-        if (host_keyboard_led_state().num_lock)
-            rgb_matrix_set_color(NUM_INDICATOR_INDEX, rgb_num_indicator_color.r, rgb_num_indicator_color.g, rgb_num_indicator_color.b);
-        else
-            rgb_matrix_set_color(NUM_INDICATOR_INDEX, 0, 0, 0);
-    }
-    if (eeprom_ec_config.caps.enabled) {
-        hsv_t hsv_caps_indicator_color = {eeprom_ec_config.caps.h, eeprom_ec_config.caps.s, eeprom_ec_config.caps.v};
-        rgb_t rgb_caps_indicator_color = hsv_to_rgb(hsv_caps_indicator_color);
-        if (host_keyboard_led_state().caps_lock)
-            rgb_matrix_set_color(CAPS_INDICATOR_INDEX, rgb_caps_indicator_color.r, rgb_caps_indicator_color.g, rgb_caps_indicator_color.b);
-        else
-            rgb_matrix_set_color(CAPS_INDICATOR_INDEX, 0, 0, 0);
-    }
-    if (eeprom_ec_config.scroll.enabled) {
-        hsv_t hsv_scroll_indicator_color = {eeprom_ec_config.scroll.h, eeprom_ec_config.scroll.s, eeprom_ec_config.scroll.v};
-        rgb_t rgb_scroll_indicator_color = hsv_to_rgb(hsv_scroll_indicator_color);
-        if (host_keyboard_led_state().scroll_lock)
-            rgb_matrix_set_color(SCROLL_INDICATOR_INDEX, rgb_scroll_indicator_color.r, rgb_scroll_indicator_color.g, rgb_scroll_indicator_color.b);
-        else
-            rgb_matrix_set_color(SCROLL_INDICATOR_INDEX, 0, 0, 0);
-    }
+// This function is called when layers change
+__attribute__((weak)) layer_state_t layer_state_set_user(layer_state_t state) {
+    indicators_callback();
+    return state;
+}
 
+bool func_switch(uint8_t func) {
+    switch (func) {
+        case 0x00: {
+            return false;
+            break;
+        }
+        case 0x01: // If indicator is set as caps lock
+        {
+            if (host_keyboard_led_state().caps_lock) return true;
+            break;
+        }
+        case 0x02: // If indicator is set as num lock
+        {
+            if (host_keyboard_led_state().num_lock) return true;
+            break;
+        }
+        case 0x03: // If indicator is set as scroll lock
+        {
+            if (host_keyboard_led_state().scroll_lock) return true;
+            break;
+        }
+        case 0x04: // If indicator is set as layer 0
+        case 0x05: // layer 1
+        case 0x06: // layer 2
+        case 0x07: // layer 3
+        case 0x08: // layer 4
+        case 0x09: // layer 5
+        case 0x0A: // layer 6
+        case 0x0B: // layer 7
+        {
+            if (IS_LAYER_ON((int)(func)-4)) return true;
+            break;
+        }
+        default: {
+            return false;
+        }
+    }
+    return false;
+}
+
+bool set_indicator(indicator_config indicator) {
+    if (!indicator.enabled) return false;
+    return func_switch(indicator.func & 0x0F);
+}
+
+bool indicators_callback(void) {
+    // Basic functioning: for each indicator, set_indicator is used to decide if the current indicator should be lit or off.
+    indicator_config *current_indicator_p;
+    int               index;
+    RGB               color;
+    for (index = 0; index < 3; index++) {
+        current_indicator_p = get_indicator_p(index);
+        if (set_indicator(*(current_indicator_p))) {
+            /*
+               Issue: while the VIA custom GUI returns HSV values, the QMK direct operation funcs are RGB.
+               So this line converts the current indicator to RGB. This was not done at the indicator_config_set_value VIA callback function
+               because at the indicator_config_get_value the RGB to HSV would be required and this throttles the keyboard
+               when the user is adjusting the color on the GUI.
+            */
+            color = hsv_to_rgb((HSV){current_indicator_p->h, current_indicator_p->s, current_indicator_p->v});
+            rgblight_setrgb_at(color.r, color.g, color.b, current_indicator_p->index);
+        } else
+            rgblight_setrgb_at(RGB_OFF, current_indicator_p->index);
+    }
     return true;
 }

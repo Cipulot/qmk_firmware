@@ -17,25 +17,20 @@
 #define MATRIX_ROWS 5
 #define MATRIX_COLS 15
 
-#define UNUSED_POSITIONS_LIST { {2, 13}, {4, 0}, {4, 2}, {4, 4}, {4, 7}, {4, 9}, {4, 11}, {4, 12}, {4, 13} }
+#define UNUSED_POSITIONS_LIST {{2, 13}, {4, 0}, {4, 2}, {4, 4}, {4, 7}, {4, 9}, {4, 11}, {4, 12}, {4, 13}}
 
-#define MATRIX_ROW_PINS \
-    { B8, B9, B12, B4, A10 }
+#define MATRIX_ROW_PINS {B8, B9, B12, B4, A10}
 
 #define AMUX_COUNT 1
 #define AMUX_MAX_COLS_COUNT 15
 
-#define AMUX_EN_PINS \
-    { A9 }
+#define AMUX_EN_PINS {A9}
 
-#define AMUX_SEL_PINS \
-    { B13, B14, A8, B15 }
+#define AMUX_SEL_PINS {B13, B14, A8, B15}
 
-#define AMUX_COL_CHANNELS_SIZES \
-    { 15 }
+#define AMUX_COL_CHANNELS_SIZES {15}
 
-#define AMUX_0_COL_CHANNELS \
-    { 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
+#define AMUX_0_COL_CHANNELS {14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0}
 
 #define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS
 
@@ -59,7 +54,7 @@
 #define CHARGE_TIME 1
 #define DISCHARGE_TIME 10
 
-#define EECONFIG_KB_DATA_SIZE (20 + (11 * MATRIX_ROWS * MATRIX_COLS))
+#define EECONFIG_KB_DATA_SIZE (38 + (11 * MATRIX_ROWS * MATRIX_COLS))
 
 // RGB & Indicators
 // PWM driver with direct memory access (DMA) support
@@ -67,4 +62,3 @@
 #define WS2812_PWM_CHANNEL 2
 #define WS2812_PWM_PAL_MODE 2
 #define WS2812_DMA_STREAM STM32_DMA1_STREAM6
-
