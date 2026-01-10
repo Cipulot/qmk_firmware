@@ -67,6 +67,11 @@ void eeconfig_init_kb(void) {
 
 // Keyboard post-initialization
 void keyboard_post_init_kb(void) {
+    // Register RPC handler for VIA commands if split keyboard
+#ifdef SPLIT_KEYBOARD
+    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+#endif
+
     // Read the EEPROM data block
     eeconfig_read_kb_datablock(&eeprom_ec_config, 0, EECONFIG_KB_DATA_SIZE);
 
@@ -93,10 +98,6 @@ void keyboard_post_init_kb(void) {
             bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
         }
     }
-    // Register RPC handler for VIA commands if split keyboard
-#ifdef SPLIT_KEYBOARD
-    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
-#endif
 
     // Copy SOCD cleaner pairs to runtime instance
     memcpy(socd_opposing_pairs, eeprom_ec_config.eeprom_socd_opposing_pairs, sizeof(socd_opposing_pairs));

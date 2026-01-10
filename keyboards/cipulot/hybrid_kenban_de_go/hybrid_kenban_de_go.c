@@ -73,6 +73,11 @@ void eeconfig_init_kb(void) {
 
 // Keyboard post-initialization
 void keyboard_post_init_kb(void) {
+    // Register RPC handler for VIA commands if split keyboard
+#ifdef SPLIT_KEYBOARD
+    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
+    transaction_register_rpc(RPC_ID_KB_EEPROM_SYNC, kb_eeprom_cmd_slave_handler);
+#endif
     // Read the EEPROM data block
     eeconfig_read_kb_datablock(&eeprom_hybrid_config, 0, EECONFIG_KB_DATA_SIZE);
 
@@ -108,16 +113,26 @@ void keyboard_post_init_kb(void) {
     // Copy SOCD cleaner pairs to runtime instance
     memcpy(socd_opposing_pairs, eeprom_hybrid_config.eeprom_socd_opposing_pairs, sizeof(socd_opposing_pairs));
 
-
 #ifdef SPLIT_KEYBOARD
-    // Register RPC handlers
-    transaction_register_rpc(RPC_ID_VIA_CMD, via_cmd_slave_handler);
-    transaction_register_rpc(RPC_ID_KB_EEPROM_SYNC, kb_eeprom_cmd_slave_handler);
-
+    // If master, send EEPROM config to slave side
     if (is_keyboard_master()) {
         // Sync EEPROM config to slave side
         // This is done to ensure both sides have the same configuration in the case one side (either the master or the slave) is connected by itself and has its own EEPROM data.
-        transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_hybrid_config_t), &eeprom_hybrid_config);
+        // transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, sizeof(eeprom_hybrid_config_t), &eeprom_hybrid_config);
+        uint8_t *data_ptr   = (uint8_t *)&eeprom_hybrid_config;
+        size_t   total_size = sizeof(eeprom_hybrid_config_t);
+        uint8_t  seq        = 0;
+        for (size_t offset = 0; offset < total_size; offset += EEPROM_CHUNK_SIZE) {
+            size_t  chunk_size = (total_size - offset > EEPROM_CHUNK_SIZE) ? EEPROM_CHUNK_SIZE : (total_size - offset);
+            uint8_t tx_buf[EEPROM_CHUNK_SIZE + 1];
+            tx_buf[0] = seq; // sequence number
+            memcpy(&tx_buf[1], data_ptr + offset, chunk_size);
+            transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, chunk_size + 1, tx_buf);
+            seq++;
+        }
+        // Send final sync complete message
+        uint8_t end_buf[1] = {0xFF};
+        transaction_rpc_send(RPC_ID_KB_EEPROM_SYNC, 1, end_buf);
     }
 #endif
 
@@ -130,13 +145,47 @@ void keyboard_post_init_kb(void) {
 }
 
 #ifdef SPLIT_KEYBOARD
-// EEPROM sync command handler for slave side
+static uint8_t eeprom_sync_buffer[sizeof(eeprom_hybrid_config_t)];
+static size_t  eeprom_sync_offset = 0;
+static uint8_t expected_seq       = 0;
+
 void kb_eeprom_cmd_slave_handler(uint8_t m2s_size, const void *m2s_buffer, uint8_t s2m_size, void *s2m_buffer) {
-    if (m2s_size == sizeof(eeprom_hybrid_config_t)) {
-        memcpy(&eeprom_hybrid_config, m2s_buffer, sizeof(eeprom_hybrid_config_t));
-        eeconfig_update_kb_datablock(&eeprom_hybrid_config, 0, EECONFIG_KB_DATA_SIZE);
+    if (m2s_size == 1 && ((uint8_t *)m2s_buffer)[0] == 0xFF) {
+        // End of sync message
+        if (eeprom_sync_offset == sizeof(eeprom_hybrid_config_t)) {
+            memcpy(&eeprom_hybrid_config, eeprom_sync_buffer, sizeof(eeprom_hybrid_config_t));
+            eeconfig_update_kb_datablock(&eeprom_hybrid_config, 0, EECONFIG_KB_DATA_SIZE);
+            uprintf("EEPROM sync complete\n");
+        } else {
+            uprintf("EEPROM sync incomplete: received %u bytes\n", (unsigned int)eeprom_sync_offset);
+        }
+        eeprom_sync_offset = 0;
+        expected_seq       = 0;
+        return;
+    }
+    if (m2s_size > 1) {
+        uint8_t        seq        = ((uint8_t *)m2s_buffer)[0];
+        const uint8_t *chunk      = &((uint8_t *)m2s_buffer)[1];
+        size_t         chunk_size = m2s_size - 1;
+        if (seq != expected_seq) {
+            uprintf("EEPROM sync sequence error: expected %u, got %u\n", (unsigned int)expected_seq, (unsigned int)seq);
+            eeprom_sync_offset = 0;
+            expected_seq       = 0;
+            return;
+        }
+        if (eeprom_sync_offset + chunk_size <= sizeof(eeprom_hybrid_config_t)) {
+            memcpy(eeprom_sync_buffer + eeprom_sync_offset, chunk, chunk_size);
+            eeprom_sync_offset += chunk_size;
+            expected_seq++;
+        } else {
+            uprintf("EEPROM sync overflow or unexpected chunk size\n");
+            eeprom_sync_offset = 0;
+            expected_seq       = 0;
+        }
     } else {
-        uprintf("Unexpected response in slave handler of EEPROM sync\n");
+        uprintf("EEPROM sync: invalid chunk size\n");
+        eeprom_sync_offset = 0;
+        expected_seq       = 0;
     }
 }
 #endif
