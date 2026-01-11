@@ -137,10 +137,10 @@ def compile_variant(def_file, userspace_via, log_lock):
         alt_result = None
         alt_message = ""
         if processor == "STM32F401":
-            alt_result = do_compile("STM32F411", alt_suffix="_ALT")
+            alt_result = do_compile("STM32F411")
             alt_message = f" (also compiled as STM32F411)"
         elif processor == "STM32F411":
-            alt_result = do_compile("STM32F401", alt_suffix="_ALT")
+            alt_result = do_compile("STM32F401")
             alt_message = f" (also compiled as STM32F401)"
         if compile_result is not None:
             return (board, compile_message + alt_message, "FAILED!")
