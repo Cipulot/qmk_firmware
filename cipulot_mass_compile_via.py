@@ -3,10 +3,17 @@ import sys
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import json
+
+# Set environment variables before importing qmk
+CWD = os.getcwd()
+os.environ["QMK_HOME"] = os.environ["ORIG_CWD"] = CWD
 
 QMK_PY = Path("lib") / "python"
-
 sys.path.append(str(QMK_PY))
+
+from qmk.keyboard import list_keyboards
+from qmk.build_targets import KeyboardKeymapBuildTarget
 
 # Compatibility shim: some environments (or shadowed 'ast' modules) may not expose
 # the legacy AST node classes like `ast.Num`. The `qmk` package (lib/python/qmk/math.py)
@@ -39,16 +46,12 @@ if not hasattr(ast, "Num"):
         # Make ast.Num point to ast.Constant so isinstance checks succeed.
         ast.Num = ast.Constant
 
+
 CWD = os.getcwd()
 USERSPACE_VIA = os.path.abspath(os.path.join(CWD, "..", "qmk_userspace_via"))
 
-os.environ["QMK_HOME"] = os.environ["ORIG_CWD"] = CWD
-
-from qmk.keyboard import list_keyboards
-from qmk.build_targets import KeyboardKeymapBuildTarget
-
 everything = list_keyboards()
-cipulot = list(filter(lambda x: x.startswith("cipulot"), everything))
+cipulot = list(filter(lambda x: x.startswith("cipulot"), list_keyboards()))
 
 # remove previous artifacts
 sys.stdout.write("Removing previous artifacts in QMK Firmware folder...\n")
@@ -65,23 +68,32 @@ for ext in ("uf2", "bin", "hex"):
         file.unlink()
 
 
-# actual compilation
-def compile_board(board, userspace_via, log_lock):
-    """Compile a single board and return the result"""
+def find_all_definition_files(board_path):
+    # Recursively find all keyboard.json and info.json files under board_path
+    return list(board_path.rglob("keyboard.json")) + list(board_path.rglob("info.json"))
+
+
+def compile_variant(def_file, userspace_via, log_lock):
+    # Determine the board name from the path (relative to keyboards/)
+    rel_path = def_file.relative_to(Path("keyboards"))
+    board = str(rel_path.parent)
+    # Load JSON
+    with open(def_file, "r") as f:
+        try:
+            kb_data = json.load(f)
+            processor = kb_data.get("processor", "")
+        except Exception:
+            processor = ""
 
     def do_compile(processor_override=None, alt_suffix=None):
-        kb_json_path = Path("keyboards") / board / "keyboard.json"
         original_json = None
-        if processor_override and kb_json_path.exists():
-            import json
-
-            with open(kb_json_path, "r") as f:
+        if processor_override:
+            with open(def_file, "r") as f:
                 original_json = f.read()
-            kb_data = json.loads(original_json)
-            kb_data["processor"] = processor_override
-            with open(kb_json_path, "w") as f:
-                json.dump(kb_data, f, indent=4)
-
+            kb_data2 = json.loads(original_json)
+            kb_data2["processor"] = processor_override
+            with open(def_file, "w") as f:
+                json.dump(kb_data2, f, indent=4)
         target = KeyboardKeymapBuildTarget(board, "via")
         target.configure(parallel=16)
         keymap_directory = Path(userspace_via) / "keyboards" / board / "keymaps" / "via"
@@ -93,23 +105,14 @@ def compile_board(board, userspace_via, log_lock):
             "MAIN_KEYMAP_PATH_5": str(keymap_directory),
         }
         compile_result = target.compile()
-        processor = processor_override
-        if not processor and kb_json_path.exists():
-            import json
-
-            with open(kb_json_path, "r") as f:
-                try:
-                    kb_data = json.load(f)
-                    processor = kb_data.get("processor", "")
-                except Exception:
-                    processor = ""
+        proc = processor_override if processor_override else processor
         prefix_map = {
             "STM32F401": "F401_",
             "STM32F411": "F411_",
             "STM32F072": "F072_",
             "STM32G431": "G431_",
         }
-        prefix = prefix_map.get(processor, None)
+        prefix = prefix_map.get(proc, None)
         bin_file = None
         for f in Path().glob("cipulot_*.bin"):
             if f.is_file():
@@ -122,22 +125,11 @@ def compile_board(board, userspace_via, log_lock):
                 new_name = parts[0] + alt_suffix + "." + parts[1]
             bin_file.rename(new_name)
         if processor_override and original_json is not None:
-            with open(kb_json_path, "w") as f:
+            with open(def_file, "w") as f:
                 f.write(original_json)
         return compile_result
 
     try:
-        kb_json_path = Path("keyboards") / board / "keyboard.json"
-        processor = None
-        if kb_json_path.exists():
-            import json
-
-            with open(kb_json_path, "r") as f:
-                try:
-                    kb_data = json.load(f)
-                    processor = kb_data.get("processor", "")
-                except Exception:
-                    processor = ""
         compile_result = do_compile()
         compile_message = f"Compiling: {board} "
         dots = "." * (50 - len(compile_message))
@@ -163,27 +155,25 @@ def compile_board(board, userspace_via, log_lock):
 
 sys.stdout.write("Compiling Cipulot boards with VIA...\n")
 
-# Filter out cipulot/common before parallel processing
-boards_to_compile = [board for board in cipulot if board != "cipulot/common"]
+# Recursively find all keyboard.json and info.json files for all boards
+boards_root = Path("keyboards/cipulot")
+definition_files = []
+for board in cipulot:
+    board_path = boards_root / Path(board).relative_to("cipulot")
+    definition_files.extend(find_all_definition_files(board_path))
 
 log_lock = threading.Lock()
 results = []
-
-# Use ThreadPoolExecutor for parallel compilation
-# Adjust max_workers based on your system capabilities
-# Consider memory usage and CPU cores when setting this value
-max_parallel_builds = 4  # You can adjust this number based on your system
-
+max_parallel_builds = 8
 with ThreadPoolExecutor(max_workers=max_parallel_builds) as executor:
-    # Submit all compilation tasks
-    future_to_board = {
-        executor.submit(compile_board, board, USERSPACE_VIA, log_lock): board
-        for board in boards_to_compile
+    future_to_def = {
+        executor.submit(compile_variant, def_file, USERSPACE_VIA, log_lock): str(
+            def_file
+        )
+        for def_file in definition_files
     }
-
-    # Process completed tasks as they finish
     with (CWD / "cipulot.log").open("w") as file:
-        for future in as_completed(future_to_board):
+        for future in as_completed(future_to_def):
             board, compile_message, result = future.result()
             file.write(f"{compile_message} {result}\n")
             file.flush()
