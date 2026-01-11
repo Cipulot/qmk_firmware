@@ -107,7 +107,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
 
     if (ec_config.bottoming_calibration) {
         if (ec_config.bottoming_calibration_starter) {
-            ec_config.bottoming_calibration_reading             = sw_value;
+            ec_config.bottoming_calibration_reading = sw_value;
             ec_config.bottoming_calibration_starter = false;
         } else if (sw_value > ec_config.bottoming_calibration_reading) {
             ec_config.bottoming_calibration_reading = sw_value;
@@ -141,15 +141,15 @@ uint16_t ec_readkey_raw(void) {
 }
 
 // Update press/release state of key
-bool ec_update_key(matrix_row_t* current_row, uint16_t sw_value) {
+bool ec_update_key(matrix_row_t *current_row, uint16_t sw_value) {
     bool current_state = (*current_row >> 0) & 1;
 
     // Real Time Noise Floor Calibration
     if (sw_value < (ec_config.noise_floor - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d\n", sw_value);
-        ec_config.noise_floor                             = sw_value;
-        ec_config.rescaled_apc_actuation_threshold     = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
-        ec_config.rescaled_apc_release_threshold       = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
+        ec_config.noise_floor                         = sw_value;
+        ec_config.rescaled_apc_actuation_threshold    = rescale(ec_config.apc_actuation_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
+        ec_config.rescaled_apc_release_threshold      = rescale(ec_config.apc_release_threshold, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
         ec_config.rescaled_rt_initial_deadzone_offset = rescale(ec_config.rt_initial_deadzone_offset, ec_config.noise_floor, eeprom_ec_config.bottoming_calibration_reading);
     }
 
@@ -221,5 +221,5 @@ void ec_print_matrix(void) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / 1023 + out_min;
+    return x * (out_max - out_min) / 1023 + out_min;
 }

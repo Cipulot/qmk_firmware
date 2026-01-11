@@ -126,7 +126,7 @@ void he_noise_floor(void) {
     // Sample the noise floor
     for (uint8_t i = 0; i < DEFAULT_NOISE_FLOOR_SAMPLING_COUNT; i++) {
         for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
-            //disable_unused_amux(amux);
+            // disable_unused_amux(amux);
             for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
                 he_config.noise_floor[amux][col] += he_readkey_raw(amux, col);
             }
@@ -147,14 +147,14 @@ bool he_matrix_scan(matrix_row_t current_matrix[]) {
     bool updated = false;
 
     for (uint8_t amux = 0; amux < AMUX_COUNT; amux++) {
-        //disable_unused_amux(amux);
-        //wait_us(DISCHARGE_TIME);
+        // disable_unused_amux(amux);
+        // wait_us(DISCHARGE_TIME);
         for (uint8_t col = 0; col < amux_n_col_sizes[amux]; col++) {
             sw_value[amux][col] = he_readkey_raw(amux, col);
 
             if (he_config.bottoming_calibration) {
                 if (he_config.bottoming_calibration_starter[amux][col]) {
-                    he_config.bottoming_calibration_reading[amux][col]             = sw_value[amux][col];
+                    he_config.bottoming_calibration_reading[amux][col] = sw_value[amux][col];
                     he_config.bottoming_calibration_starter[amux][col] = false;
                 } else if (sw_value[amux][col] > he_config.bottoming_calibration_reading[amux][col]) {
                     he_config.bottoming_calibration_reading[amux][col] = sw_value[amux][col];
@@ -202,15 +202,15 @@ uint16_t he_readkey_raw(uint8_t channel, uint8_t col) {
 }
 
 // Update press/release state of key
-bool he_update_key(matrix_row_t* current_row, uint8_t amux, uint8_t col, uint16_t sw_value) {
+bool he_update_key(matrix_row_t *current_row, uint8_t amux, uint8_t col, uint16_t sw_value) {
     bool current_state = (*current_row >> col) & 1;
 
     // Real Time Noise Floor Calibration
     if (sw_value < (he_config.noise_floor[amux][col] - NOISE_FLOOR_THRESHOLD)) {
         uprintf("Noise Floor Change: %d, %d, %d\n", amux, col, sw_value);
-        he_config.noise_floor[amux][col]                             = sw_value;
-        he_config.rescaled_apc_actuation_threshold[amux][col]     = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
-        he_config.rescaled_apc_release_threshold[amux][col]       = rescale(he_config.apc_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
+        he_config.noise_floor[amux][col]                         = sw_value;
+        he_config.rescaled_apc_actuation_threshold[amux][col]    = rescale(he_config.apc_actuation_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
+        he_config.rescaled_apc_release_threshold[amux][col]      = rescale(he_config.apc_release_threshold, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
         he_config.rescaled_rt_initial_deadzone_offset[amux][col] = rescale(he_config.rt_initial_deadzone_offset, he_config.noise_floor[amux][col], eeprom_he_config.bottoming_calibration_reading[amux][col]);
     }
 
@@ -287,5 +287,5 @@ void he_print_matrix(void) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / 1023 + out_min;
+    return x * (out_max - out_min) / 1023 + out_min;
 }

@@ -101,7 +101,7 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
             sw_value[row][0] = ec_readkey_raw(0, row, 0);
             if (ec_config.bottoming_calibration_starter[row][0]) {
-                ec_config.bottoming_calibration_reading[row][0]             = sw_value[row][0];
+                ec_config.bottoming_calibration_reading[row][0] = sw_value[row][0];
                 ec_config.bottoming_calibration_starter[row][0] = false;
             } else if (sw_value[row][0] > ec_config.bottoming_calibration_reading[row][0]) {
                 ec_config.bottoming_calibration_reading[row][0] = sw_value[row][0];
@@ -141,7 +141,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 }
 
 // Update press/release state of key
-bool ec_update_key(matrix_row_t* current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
+bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
     bool current_state = (*current_row >> col) & 1;
 
     // Normal board-wide APC
@@ -207,5 +207,5 @@ void ec_print_matrix(void) {
 
 // Rescale the value to a different range
 uint16_t rescale(uint16_t x, uint16_t out_min, uint16_t out_max) {
-    return x  * (out_max - out_min) / 1023 + out_min;
+    return x * (out_max - out_min) / 1023 + out_min;
 }

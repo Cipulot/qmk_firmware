@@ -19,28 +19,22 @@
 #define MATRIX_ROWS 6
 #define MATRIX_COLS 18
 
-#define UNUSED_POSITIONS_LIST { {0, 6}, {0, 14}, {3, 14}, {3, 15}, {3, 16}, {3, 17}, {4, 12}, {4, 15}, {4, 17}, {5, 1}, {5, 4}, {5, 8}, {5, 11}, {5, 12}, {5, 14} }
+#define UNUSED_POSITIONS_LIST {{0, 6}, {0, 14}, {3, 14}, {3, 15}, {3, 16}, {3, 17}, {4, 12}, {4, 15}, {4, 17}, {5, 1}, {5, 4}, {5, 8}, {5, 11}, {5, 12}, {5, 14}}
 
-#define MATRIX_ROW_PINS \
-    { B6, B7, B5, B4, B3, A15 }
+#define MATRIX_ROW_PINS {B6, B7, B5, B4, B3, A15}
 
 #define AMUX_COUNT 2
 #define AMUX_MAX_COLS_COUNT 16
 
-#define AMUX_EN_PINS \
-    { A9, A8 }
+#define AMUX_EN_PINS {A9, A8}
 
-#define AMUX_SEL_PINS \
-    { B12, B13, B15, B14 }
+#define AMUX_SEL_PINS {B12, B13, B15, B14}
 
-#define AMUX_COL_CHANNELS_SIZES \
-    { 7, 11 }
+#define AMUX_COL_CHANNELS_SIZES {7, 11}
 
-#define AMUX_0_COL_CHANNELS \
-    { 2, 1, 0, 3, 5, 4, 7 }
+#define AMUX_0_COL_CHANNELS {2, 1, 0, 3, 5, 4, 7}
 
-#define AMUX_1_COL_CHANNELS \
-    { 2, 1, 0, 15, 14, 13, 12, 8, 11, 10, 9 }
+#define AMUX_1_COL_CHANNELS {2, 1, 0, 15, 14, 13, 12, 8, 11, 10, 9}
 
 #define AMUX_COL_CHANNELS AMUX_0_COL_CHANNELS, AMUX_1_COL_CHANNELS
 

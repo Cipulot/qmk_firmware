@@ -18,7 +18,7 @@
 
 #include "qp.h"
 
-extern painter_device_t      kenban_de_go_display;
+extern painter_device_t kenban_de_go_display;
 
 void display_init_kb(void);
 bool display_init_user(void);

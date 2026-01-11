@@ -20,7 +20,7 @@
 #define MATRIX_ROWS 8
 #define MATRIX_COLS 1
 
-#define MATRIX_ROW_PINS { C13, B3, A15, A14, C14, C15, B4, B5 }
+#define MATRIX_ROW_PINS {C13, B3, A15, A14, C14, C15, B4, B5}
 
 /* Hardware peripherals pins */
 #define DISCHARGE_PIN B1
