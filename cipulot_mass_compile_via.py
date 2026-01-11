@@ -13,6 +13,7 @@ sys.path.append(str(QMK_PY))
 # still uses `ast.Num`, so ensure a minimal-compatible `ast.Num` exists before
 # importing any qmk modules.
 import ast
+
 if not hasattr(ast, "Num"):
     # On newer Python ASTs numeric literals are `ast.Constant` instances.
     # Two things are needed so older code using `ast.Num` keeps working:
@@ -63,14 +64,26 @@ for ext in ("uf2", "bin", "hex"):
     for file in USERSPACE_VIA.glob(f"*.{ext}"):
         file.unlink()
 
+
 # actual compilation
 def compile_board(board, userspace_via, log_lock):
     """Compile a single board and return the result"""
-    try:
+
+    def do_compile(processor_override=None, alt_suffix=None):
+        kb_json_path = Path("keyboards") / board / "keyboard.json"
+        original_json = None
+        if processor_override and kb_json_path.exists():
+            import json
+
+            with open(kb_json_path, "r") as f:
+                original_json = f.read()
+            kb_data = json.loads(original_json)
+            kb_data["processor"] = processor_override
+            with open(kb_json_path, "w") as f:
+                json.dump(kb_data, f, indent=4)
+
         target = KeyboardKeymapBuildTarget(board, "via")
         target.configure(parallel=16)
-
-        # Construct the correct keymap directory path
         keymap_directory = Path(userspace_via) / "keyboards" / board / "keymaps" / "via"
         target.extra_args = {
             "MAIN_KEYMAP_PATH_1": str(keymap_directory),
@@ -79,19 +92,11 @@ def compile_board(board, userspace_via, log_lock):
             "MAIN_KEYMAP_PATH_4": str(keymap_directory),
             "MAIN_KEYMAP_PATH_5": str(keymap_directory),
         }
-
         compile_result = target.compile()
-
-        compile_message = f"Compiling: {board} "
-        dots = "." * (50 - len(compile_message))
-        compile_message += dots
-
-        # After compilation, rename .bin file if it exists
-        # Find the keyboard.json for this board
-        kb_json_path = Path("keyboards") / board / "keyboard.json"
-        processor = None
-        if kb_json_path.exists():
+        processor = processor_override
+        if not processor and kb_json_path.exists():
             import json
+
             with open(kb_json_path, "r") as f:
                 try:
                     kb_data = json.load(f)
@@ -105,7 +110,6 @@ def compile_board(board, userspace_via, log_lock):
             "STM32G431": "G431_",
         }
         prefix = prefix_map.get(processor, None)
-        # Look for .bin file starting with cipulot_
         bin_file = None
         for f in Path().glob("cipulot_*.bin"):
             if f.is_file():
@@ -113,17 +117,49 @@ def compile_board(board, userspace_via, log_lock):
                 break
         if prefix and bin_file:
             new_name = bin_file.name.replace("cipulot_", prefix, 1)
+            if alt_suffix:
+                parts = new_name.rsplit(".", 1)
+                new_name = parts[0] + alt_suffix + "." + parts[1]
             bin_file.rename(new_name)
+        if processor_override and original_json is not None:
+            with open(kb_json_path, "w") as f:
+                f.write(original_json)
+        return compile_result
 
+    try:
+        kb_json_path = Path("keyboards") / board / "keyboard.json"
+        processor = None
+        if kb_json_path.exists():
+            import json
+
+            with open(kb_json_path, "r") as f:
+                try:
+                    kb_data = json.load(f)
+                    processor = kb_data.get("processor", "")
+                except Exception:
+                    processor = ""
+        compile_result = do_compile()
+        compile_message = f"Compiling: {board} "
+        dots = "." * (50 - len(compile_message))
+        compile_message += dots
+        alt_result = None
+        alt_message = ""
+        if processor == "STM32F401":
+            alt_result = do_compile("STM32F411", alt_suffix="_ALT")
+            alt_message = f" (also compiled as STM32F411)"
+        elif processor == "STM32F411":
+            alt_result = do_compile("STM32F401", alt_suffix="_ALT")
+            alt_message = f" (also compiled as STM32F401)"
         if compile_result is not None:
-            return (board, compile_message, "FAILED!")
+            return (board, compile_message + alt_message, "FAILED!")
         else:
-            return (board, compile_message, "SUCCESS!")
+            return (board, compile_message + alt_message, "SUCCESS!")
     except Exception as e:
         compile_message = f"Compiling: {board} "
         dots = "." * (50 - len(compile_message))
         compile_message += dots
         return (board, compile_message, f"ERROR: {str(e)}")
+
 
 sys.stdout.write("Compiling Cipulot boards with VIA...\n")
 
