@@ -86,6 +86,35 @@ def compile_board(board, userspace_via, log_lock):
         dots = "." * (50 - len(compile_message))
         compile_message += dots
 
+        # After compilation, rename .bin file if it exists
+        # Find the keyboard.json for this board
+        kb_json_path = Path("keyboards") / board / "keyboard.json"
+        processor = None
+        if kb_json_path.exists():
+            import json
+            with open(kb_json_path, "r") as f:
+                try:
+                    kb_data = json.load(f)
+                    processor = kb_data.get("processor", "")
+                except Exception:
+                    processor = ""
+        prefix_map = {
+            "STM32F401": "F401_",
+            "STM32F411": "F411_",
+            "STM32F072": "F072_",
+            "STM32G431": "G431_",
+        }
+        prefix = prefix_map.get(processor, None)
+        # Look for .bin file starting with cipulot_
+        bin_file = None
+        for f in Path().glob("cipulot_*.bin"):
+            if f.is_file():
+                bin_file = f
+                break
+        if prefix and bin_file:
+            new_name = bin_file.name.replace("cipulot_", prefix, 1)
+            bin_file.rename(new_name)
+
         if compile_result is not None:
             return (board, compile_message, "FAILED!")
         else:
