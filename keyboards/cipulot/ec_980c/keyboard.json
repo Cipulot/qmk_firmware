@@ -7,6 +7,9 @@
         "lto": true
     },
     "diode_direction": "COL2ROW",
+    "dynamic_keymap": {
+        "layer_count": 8
+    },
     "eeprom": {
         "wear_leveling": {
             "backing_size": 8192
@@ -44,7 +47,7 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BBE",
+        "pid": "0x6BFA",
         "shared_endpoint": {
             "keyboard": true
         },

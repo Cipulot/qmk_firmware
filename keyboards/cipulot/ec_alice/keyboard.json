@@ -51,7 +51,7 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BD5",
+        "pid": "0x6BF9",
         "shared_endpoint": {
             "keyboard": true
         },

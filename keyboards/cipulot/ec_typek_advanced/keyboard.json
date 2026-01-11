@@ -52,7 +52,7 @@
     },
     "usb": {
         "device_version": "0.0.1",
-        "pid": "0x6BCC",
+        "pid": "0x6BF8",
         "shared_endpoint": {
             "keyboard": true
         },
