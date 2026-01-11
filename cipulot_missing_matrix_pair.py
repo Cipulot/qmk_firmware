@@ -139,16 +139,41 @@ def main():
                     log_file.write(f"{board_name} ({layout_name}): NO MISSING PAIRS\n")
                 else:
                     formatted_pairs = format_pairs(missing_pairs)
-                    # Check if the formatted pairs match the ones in config.h
+                    # Normalize and compare UNUSED_POSITIONS_LIST as sets of tuples
                     with open(config_h_path, "r") as file:
                         content = file.read()
-                        if (
-                            f"#define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}"
-                            in content
-                        ):
-                            log_file.write(
-                                f"{board_name} ({layout_name}): UNUSED_POSITIONS_LIST already defined in config.h\n"
-                            )
+                        # Find the line with #define UNUSED_POSITIONS_LIST
+                        idx = content.find('#define UNUSED_POSITIONS_LIST')
+                        if idx != -1:
+                            # Find the first '{' after the define
+                            start = content.find('{', idx)
+                            if start != -1:
+                                brace_count = 0
+                                end = start
+                                for i, c in enumerate(content[start:], start=start):
+                                    if c == '{':
+                                        brace_count += 1
+                                    elif c == '}':
+                                        brace_count -= 1
+                                        if brace_count == 0:
+                                            end = i
+                                            break
+                                braces_content = content[start:end+1]
+                                # Remove all whitespace for comparison
+                                existing_str = re.sub(r"\s+", "", braces_content)
+                                generated_str = re.sub(r"\s+", "", f"{{{formatted_pairs}}}")
+                                if existing_str == generated_str:
+                                    log_file.write(
+                                        f"{board_name} ({layout_name}): UNUSED_POSITIONS_LIST already defined in config.h\n"
+                                    )
+                                else:
+                                    log_file.write(
+                                        f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
+                                    )
+                            else:
+                                log_file.write(
+                                    f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
+                                )
                         else:
                             log_file.write(
                                 f"{board_name} ({layout_name}): #define UNUSED_POSITIONS_LIST {{ {formatted_pairs} }}\n"
