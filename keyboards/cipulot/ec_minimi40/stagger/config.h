@@ -31,7 +31,7 @@
     { B13 }
 
 #define AMUX_SEL_PINS \
-    { A8, B14, B15 }
+    { A8, B15, B14 }
 
 #define AMUX_COL_CHANNELS_SIZES \
     { 4 }
