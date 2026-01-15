@@ -345,32 +345,6 @@ void update_keys_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_
     }
 }
 
-// Update a field across all keys and immediately rescale thresholds (runtime-only or in-memory EEPROM)
-void update_keys_field_rescale(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size, rescale_mode_t rescale_mode) {
-    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][col];
-            eeprom_key_state_t  *key_eeprom  = &eeprom_hybrid_config.eeprom_key_state[row][col];
-
-            // Update runtime
-            uint8_t *runtime_field = (uint8_t *)key_runtime + runtime_offset;
-            memcpy(runtime_field, value, field_size);
-
-            if (mode != HYBRID_UPDATE_RUNTIME_ONLY) {
-                // Determine EEPROM offset: shared or dual
-                size_t effective_eeprom_offset = (mode == HYBRID_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
-
-                // Update EEPROM in-memory
-                uint8_t *eeprom_field = (uint8_t *)key_eeprom + effective_eeprom_offset;
-                memcpy(eeprom_field, value, field_size);
-            }
-
-            // Immediately rescale thresholds for this key
-            bulk_rescale_key_thresholds(key_runtime, key_eeprom, rescale_mode);
-        }
-    }
-}
-
 // Print the switch matrix values for debugging
 void hybrid_print_matrix(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ec_switch_matrix.h"
+#include "hybrid_switch_matrix.h"
 #include "analog.h"
 #include "atomic_util.h"
 #include "math.h"
@@ -29,9 +29,9 @@
 // Define if open-drain pin mode is supported
 #define OPEN_DRAIN_SUPPORT defined(PAL_MODE_OUTPUT_OPENDRAIN)
 
-eeprom_ec_config_t  eeprom_ec_config;       // Definition of EEPROM shared instance
-runtime_ec_config_t runtime_ec_config;      // Definition of runtime shared instance
-socd_cleaner_t      socd_opposing_pairs[4]; // Definition of SOCD shared instance
+eeprom_hybrid_config_t  eeprom_hybrid_config;   // Definition of EEPROM shared instance
+runtime_hybrid_config_t runtime_hybrid_config;  // Definition of runtime shared instance
+socd_cleaner_t          socd_opposing_pairs[4]; // Definition of SOCD shared instance
 
 // Pin and port array
 const pin_t row_pins[]                                 = MATRIX_ROW_PINS;
@@ -42,8 +42,12 @@ const pin_t amux_n_col_channels[][AMUX_MAX_COLS_COUNT] = {AMUX_COL_CHANNELS};
 
 // Define unused positions array if specified
 #ifdef UNUSED_POSITIONS_LIST
-const uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
-#    define UNUSED_POSITIONS_COUNT ARRAY_SIZE(UNUSED_POSITIONS)
+uint8_t UNUSED_POSITIONS[][2] = UNUSED_POSITIONS_LIST;
+#endif
+
+// Define special positions array if specified
+#ifdef SPECIAL_POSITIONS_LIST
+uint8_t SPECIAL_POSITIONS[][2] = SPECIAL_POSITIONS_LIST;
 #endif
 
 // Number of AMUX selection pins
@@ -142,8 +146,8 @@ void discharge_capacitor(void) {
 #endif
 }
 
-// Initialize the EC switch matrix
-int ec_init(void) {
+// Initialize the Hybrid switch matrix
+int hybrid_init(void) {
     // Initialize the ADC peripheral
     palSetLineMode(ANALOG_PORT, PAL_MODE_INPUT_ANALOG);
     adcMux = pinToMux(ANALOG_PORT);
@@ -169,7 +173,7 @@ int ec_init(void) {
 }
 
 // Initialize the noise floor and rescale per-key thresholds
-void ec_noise_floor_calibration(void) {
+void hybrid_noise_floor_calibration(void) {
     // Column offsets for each AMUX
     uint8_t col_offsets[AMUX_COUNT];
     col_offsets[0] = 0;
@@ -181,7 +185,7 @@ void ec_noise_floor_calibration(void) {
     // Initialize all keys' noise floor to expected value
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            runtime_ec_config.runtime_key_state[row][col].noise_floor = EXPECTED_NOISE_FLOOR;
+            runtime_hybrid_config.runtime_key_state[row][col].noise_floor = EXPECTED_NOISE_FLOOR;
         }
     }
 
@@ -203,7 +207,7 @@ void ec_noise_floor_calibration(void) {
                     // Disable unused rows
                     disable_unused_row(row);
                     // Read the raw switch value and accumulate to noise floor
-                    runtime_ec_config.runtime_key_state[row][adjusted_col].noise_floor += ec_readkey_raw(amux, row, col);
+                    runtime_hybrid_config.runtime_key_state[row][adjusted_col].noise_floor += hybrid_readkey_raw(amux, row, col);
                 }
             }
         }
@@ -216,8 +220,8 @@ void ec_noise_floor_calibration(void) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             // Get pointer to key state in runtime and EEPROM
             // Makes code more readable than having the expanded version multiple times
-            runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
-            eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+            runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][col];
+            eeprom_key_state_t  *key_eeprom  = &eeprom_hybrid_config.eeprom_key_state[row][col];
 
             // Average the noise floor
             key_runtime->noise_floor /= DEFAULT_NOISE_FLOOR_SAMPLING_COUNT;
@@ -227,10 +231,14 @@ void ec_noise_floor_calibration(void) {
     }
 }
 
-// Scan the EC switch matrix
-bool ec_matrix_scan(matrix_row_t current_matrix[]) {
+// Scan the Hybrid switch matrix
+bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
     // Variable to track if any key state has changed
     bool updated = false;
+    // Coordinate struct for ghost key detection
+    KeyCoord keypresses[4];
+    // Track count of keypresses in current scan cycle
+    uint8_t mx_keypress_count = 0;
 
     // Column offsets for each AMUX
     uint8_t col_offsets[AMUX_COUNT];
@@ -255,13 +263,20 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                 // Disable unused rows
                 disable_unused_row(row);
                 // Read the raw switch value
-                sw_value[row][adjusted_col] = ec_readkey_raw(amux, row, col);
+                sw_value[row][adjusted_col] = hybrid_readkey_raw(amux, row, col);
                 // Get pointer to key state in runtime
-                runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][adjusted_col];
+                runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][adjusted_col];
+
+                // Track keypresses for ghost key detection (MX mode)
+                if (key_runtime->switch_type == 1 && (sw_value[row][adjusted_col] > 1000)) {
+                    if (mx_keypress_count < 4) {
+                        keypresses[mx_keypress_count++] = (KeyCoord){row, adjusted_col};
+                    }
+                }
 
                 // Handle bottoming calibration or update key state
                 // In bottoming calibration mode
-                if (runtime_ec_config.bottoming_calibration) {
+                if (runtime_hybrid_config.bottoming_calibration) {
                     // Only track keys that are actually pressed (above noise floor + threshold)
                     if (sw_value[row][adjusted_col] > key_runtime->noise_floor + BOTTOMING_CALIBRATION_THRESHOLD) {
                         if (key_runtime->bottoming_calibration_starter) {
@@ -275,17 +290,28 @@ bool ec_matrix_scan(matrix_row_t current_matrix[]) {
                     }
                 } else { // Normal operation mode
                     // Update the key state and track if any change occurred
-                    updated |= ec_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
+                    updated |= hybrid_update_key(&current_matrix[row], row, adjusted_col, sw_value[row][adjusted_col]);
                 }
             }
         }
     }
 
-    return runtime_ec_config.bottoming_calibration ? false : updated;
+    // Check if a square pattern exists and deactivate the last key in the pattern (ghost key
+    if (mx_keypress_count == 4) {
+        // If four keypresses detected, check for square formation (2x2 grid pattern)
+        if (forms_square(keypresses[0], keypresses[1], keypresses[2], keypresses[3])) {
+            // The last scanned key in the 2x2 square is the ghost key (determined by hardware scan order)
+            KeyCoord ghost_key = keypresses[3];
+            // Deactivate the ghost key from the matrix
+            current_matrix[ghost_key.row] &= ~(1 << ghost_key.col);
+        }
+    }
+
+    return runtime_hybrid_config.bottoming_calibration ? false : updated;
 }
 
 // Read the raw switch value from specified channel, row, and column
-uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
+uint16_t hybrid_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     // Variable to store the switch value
     uint16_t sw_value = 0;
 
@@ -313,10 +339,10 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 }
 
 // Update the key state based on the switch value
-bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
+bool hybrid_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t sw_value) {
     // Get pointer to key state in runtime and EEPROM
-    runtime_key_state_t *key_runtime = &runtime_ec_config.runtime_key_state[row][col];
-    eeprom_key_state_t  *key_eeprom  = &eeprom_ec_config.eeprom_key_state[row][col];
+    runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][col];
+    eeprom_key_state_t  *key_eeprom  = &eeprom_hybrid_config.eeprom_key_state[row][col];
 
     // Current pressed state
     bool pressed = (*current_row >> col) & 1;
@@ -329,18 +355,26 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
         bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
     }
 
-    // Update key state based on actuation mode
-    if (key_runtime->actuation_mode == 0) {
-        return ec_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
-    } else if (key_runtime->actuation_mode == 1) {
-        return ec_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
+    // Handle switch type
+    if (key_runtime->switch_type == 1) {
+        // MX switch handling
+        return hybrid_update_key_mx(current_row, col, sw_value, pressed);
+    } else if (key_runtime->switch_type == 0) {
+        // EC switch handling
+        if (key_runtime->actuation_mode == 0) {
+            // Normal board-wide APC (mode 0)
+            return hybrid_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
+        } else if (key_runtime->actuation_mode == 1) {
+            // Rapid Trigger (RT) mode
+            return hybrid_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
+        }
     }
 
     return false;
 }
 
 // Update the key state in APC mode
-bool ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
+bool hybrid_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
     // Check for release condition
     if (pressed && sw_value < key_runtime->rescaled_apc_release_threshold) {
         // Key released
@@ -357,7 +391,7 @@ bool ec_update_key_apc(matrix_row_t *current_row, uint8_t col, uint16_t sw_value
 }
 
 // Update the key state in RT mode
-bool ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
+bool hybrid_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, runtime_key_state_t *key_runtime, bool pressed) {
     // Key in active zone
     if (sw_value > key_runtime->rescaled_rt_initial_deadzone_offset) {
         if (pressed) {
@@ -394,6 +428,23 @@ bool ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value,
     return false;
 }
 
+// Update the key state in MX mode
+bool hybrid_update_key_mx(matrix_row_t *current_row, uint8_t col, uint16_t sw_value, bool pressed) {
+    // Check for release condition
+    if (pressed && sw_value < 950) {
+        // Key released
+        *current_row &= ~(1 << col);
+        return true;
+    }
+    // Check for actuation condition
+    else if (!pressed && sw_value > 1000) {
+        *current_row |= (1 << col);
+        return true;
+    }
+
+    return false;
+}
+
 // Rescale all key thresholds based on noise floor and bottoming calibration reading
 void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_state_t *key_eeprom, rescale_mode_t mode) {
     // Rescale thresholds based on mode
@@ -424,24 +475,76 @@ void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_st
 void update_keys_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            // Update runtime
-            uint8_t *runtime_field = (uint8_t *)&runtime_ec_config.runtime_key_state[row][col] + runtime_offset;
-            memcpy(runtime_field, value, field_size);
+            // Skip special positions if specified
+            if (!is_special_position(row, col)) {
+                // Update runtime
+                uint8_t *runtime_field = (uint8_t *)&runtime_hybrid_config.runtime_key_state[row][col] + runtime_offset;
+                memcpy(runtime_field, value, field_size);
 
-            if (mode != EC_UPDATE_RUNTIME_ONLY) {
-                // Determine EEPROM offset: shared or dual
-                size_t effective_eeprom_offset = (mode == EC_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
+                if (mode != HYBRID_UPDATE_RUNTIME_ONLY) {
+                    // Determine EEPROM offset: shared or dual
+                    size_t effective_eeprom_offset = (mode == HYBRID_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
 
-                // Update EEPROM in-memory
-                uint8_t *eeprom_field = (uint8_t *)&eeprom_ec_config.eeprom_key_state[row][col] + effective_eeprom_offset;
-                memcpy(eeprom_field, value, field_size);
+                    // Update EEPROM in-memory
+                    uint8_t *eeprom_field = (uint8_t *)&eeprom_hybrid_config.eeprom_key_state[row][col] + effective_eeprom_offset;
+                    memcpy(eeprom_field, value, field_size);
+                }
             }
         }
     }
 }
 
+// Unified helper function to update a field of a specific key (runtime-only)
+void update_single_key_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size, uint8_t row, uint8_t col) {
+    // Update runtime
+    uint8_t *runtime_field = (uint8_t *)&runtime_hybrid_config.runtime_key_state[row][col] + runtime_offset;
+    memcpy(runtime_field, value, field_size);
+
+    if (mode != HYBRID_UPDATE_RUNTIME_ONLY) {
+        // Determine EEPROM offset: shared or dual
+        size_t effective_eeprom_offset = (mode == HYBRID_UPDATE_SHARED_OFFSET) ? runtime_offset : eeprom_offset;
+
+        // Update EEPROM in-memory
+        uint8_t *eeprom_field = (uint8_t *)&eeprom_hybrid_config.eeprom_key_state[row][col] + effective_eeprom_offset;
+        memcpy(eeprom_field, value, field_size);
+    }
+}
+
+// Check if four coordinates form a square
+bool forms_square(KeyCoord key1, KeyCoord key2, KeyCoord key3, KeyCoord key4) {
+    KeyCoord keys[4] = {key1, key2, key3, key4};
+
+    // Collect unique rows and columns
+    uint8_t unique_rows = 0, unique_cols = 0;
+    uint8_t rows[2] = {0xFF, 0xFF}; // Use 0xFF as sentinel for "not set"
+    uint8_t cols[2] = {0xFF, 0xFF};
+
+    for (uint8_t i = 0; i < 4; i++) {
+        // Check and add unique row
+        if (keys[i].row != rows[0] && keys[i].row != rows[1]) {
+            if (unique_rows < 2) {
+                rows[unique_rows++] = keys[i].row;
+            } else {
+                return false; // More than 2 unique rows
+            }
+        }
+
+        // Check and add unique column
+        if (keys[i].col != cols[0] && keys[i].col != cols[1]) {
+            if (unique_cols < 2) {
+                cols[unique_cols++] = keys[i].col;
+            } else {
+                return false; // More than 2 unique columns
+            }
+        }
+    }
+
+    // Valid square: exactly 2 unique rows AND exactly 2 unique columns
+    return unique_rows == 2 && unique_cols == 2;
+}
+
 // Print the switch matrix values for debugging
-void ec_print_matrix(void) {
+void hybrid_print_matrix(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS - 1; col++) {
             uprintf("%4d,", sw_value[row][col]);
@@ -470,8 +573,16 @@ bool is_unused_position(uint8_t row, uint8_t col) {
 }
 #endif
 
-uint8_t *pIndicators = (uint8_t *)&eeprom_ec_config;
-
-indicator_config *get_indicator_p(int index) {
-    return (indicator_config *)(pIndicators + index * sizeof(indicator_config));
+// Check if a position is special (if SPECIAL_POSITIONS is defined)
+#ifdef SPECIAL_POSITIONS_LIST
+bool is_special_position(uint8_t row, uint8_t col) {
+    // Check against the list of special positions
+    for (uint8_t i = 0; i < SPECIAL_POSITIONS_COUNT; i++) {
+        // Compare current position with each special position
+        if (SPECIAL_POSITIONS[i][0] == row && SPECIAL_POSITIONS[i][1] == col) {
+            return true;
+        }
+    }
+    return false;
 }
+#endif
