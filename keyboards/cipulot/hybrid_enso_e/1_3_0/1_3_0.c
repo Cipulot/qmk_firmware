@@ -23,6 +23,16 @@
 
 // EEPROM default initialization
 void eeconfig_init_kb(void) {
+    // Set default board-wide configuration values
+    eeprom_hybrid_config.board_mode                       = DEFAULT_BOARD_MODE;
+    eeprom_hybrid_config.board_switch_type                = DEFAULT_SWITCH_TYPE;
+    eeprom_hybrid_config.board_apc_actuation_threshold    = DEFAULT_APC_ACTUATION_LEVEL;
+    eeprom_hybrid_config.board_apc_release_threshold      = DEFAULT_APC_RELEASE_LEVEL;
+    eeprom_hybrid_config.board_rt_initial_deadzone_offset = DEFAULT_RT_INITIAL_DEADZONE_OFFSET;
+    eeprom_hybrid_config.board_rt_actuation_offset        = DEFAULT_RT_ACTUATION_OFFSET;
+    eeprom_hybrid_config.board_rt_release_offset          = DEFAULT_RT_RELEASE_OFFSET;
+
+    // Initialize per-key EEPROM state with default values
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             // Get pointer to key state in EEPROM
@@ -71,8 +81,18 @@ void keyboard_post_init_kb(void) {
     // Read the EEPROM data block
     eeconfig_read_kb_datablock(&eeprom_hybrid_config, 0, EECONFIG_KB_DATA_SIZE);
 
-    runtime_hybrid_config.bottoming_calibration = false;
+    // Initialize runtime board-wide configuration values from EEPROM
+    runtime_hybrid_config.board_mode                       = eeprom_hybrid_config.board_mode;
+    runtime_hybrid_config.board_switch_type                = eeprom_hybrid_config.board_switch_type;
+    runtime_hybrid_config.board_actuation_mode             = eeprom_hybrid_config.board_actuation_mode;
+    runtime_hybrid_config.board_apc_actuation_threshold    = eeprom_hybrid_config.board_apc_actuation_threshold;
+    runtime_hybrid_config.board_apc_release_threshold      = eeprom_hybrid_config.board_apc_release_threshold;
+    runtime_hybrid_config.board_rt_initial_deadzone_offset = eeprom_hybrid_config.board_rt_initial_deadzone_offset;
+    runtime_hybrid_config.board_rt_actuation_offset        = eeprom_hybrid_config.board_rt_actuation_offset;
+    runtime_hybrid_config.board_rt_release_offset          = eeprom_hybrid_config.board_rt_release_offset;
+    runtime_hybrid_config.bottoming_calibration            = false;
 
+    // Initialize per-key runtime state from EEPROM
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
             // Get pointer to key state in runtime and EEPROM

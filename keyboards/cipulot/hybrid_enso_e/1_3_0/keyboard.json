@@ -7,6 +7,9 @@
         "lto": true
     },
     "diode_direction": "COL2ROW",
+    "dynamic_keymap": {
+        "layer_count": 8
+    },
     "eeprom": {
         "wear_leveling": {
             "backing_size": 8192
@@ -19,7 +22,6 @@
         "mousekey": true,
         "nkro": true
     },
-    "board": "BLACKPILL_STM32_F411",
     "processor": "STM32F411",
     "qmk": {
         "locking": {

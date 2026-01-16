@@ -85,12 +85,28 @@ typedef struct PACKED {
 
 // Runtime configuration structure definitions
 typedef struct PACKED {
+    uint8_t             board_mode;                                  // Runtime board mode: 0: Full EC, 1: Full MX, 2: Hybrid
+    uint8_t             board_switch_type;                           // 0: EC, 1: MX
+    uint8_t             board_actuation_mode;                        // 0: APC, 1: Rapid Trigger
+    uint16_t            board_apc_actuation_threshold;               // APC actuation threshold
+    uint16_t            board_apc_release_threshold;                 // APC release threshold
+    uint16_t            board_rt_initial_deadzone_offset;            // RT initial deadzone offset
+    uint8_t             board_rt_actuation_offset;                   // RT actuation offset
+    uint8_t             board_rt_release_offset;                     // RT release offset
     bool                bottoming_calibration;                       // Runtime board level flag for bottoming calibration
     runtime_key_state_t runtime_key_state[MATRIX_ROWS][MATRIX_COLS]; // Per-key runtime state
 } runtime_hybrid_config_t;
 
 // EEPROM configuration structure definitions
 typedef struct PACKED {
+    uint8_t            board_mode;                                 // EEPROM board mode: 0: Full EC, 1: Full MX, 2: Hybrid
+    uint8_t            board_switch_type;                          // 0: EC, 1: MX
+    uint8_t            board_actuation_mode;                       // 0: APC, 1: Rapid Trigger
+    uint16_t           board_apc_actuation_threshold;              // APC actuation threshold
+    uint16_t           board_apc_release_threshold;                // APC release threshold
+    uint16_t           board_rt_initial_deadzone_offset;           // RT initial deadzone offset
+    uint8_t            board_rt_actuation_offset;                  // RT actuation offset
+    uint8_t            board_rt_release_offset;                    // RT release offset
     eeprom_key_state_t eeprom_key_state[MATRIX_ROWS][MATRIX_COLS]; // Per-key EEPROM state
     socd_cleaner_t     eeprom_socd_opposing_pairs[4];              // SOCD cleaner pairs
 } eeprom_hybrid_config_t;

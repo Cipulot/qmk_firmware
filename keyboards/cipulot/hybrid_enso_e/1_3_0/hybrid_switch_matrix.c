@@ -268,7 +268,7 @@ bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
                 runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][adjusted_col];
 
                 // Track keypresses for ghost key detection (MX mode)
-                if (key_runtime->switch_type == 1 && (sw_value[row][adjusted_col] > 1000)) {
+                if (key_runtime->switch_type == SWITCH_TYPE_MX && (sw_value[row][adjusted_col] > 1000)) {
                     if (mx_keypress_count < 4) {
                         keypresses[mx_keypress_count++] = (KeyCoord){row, adjusted_col};
                     }
@@ -355,18 +355,33 @@ bool hybrid_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint
         bulk_rescale_key_thresholds(key_runtime, key_eeprom, RESCALE_MODE_ALL);
     }
 
-    // Handle switch type
-    if (key_runtime->switch_type == 1) {
-        // MX switch handling
-        return hybrid_update_key_mx(current_row, col, sw_value, pressed);
-    } else if (key_runtime->switch_type == 0) {
+    if (runtime_hybrid_config.board_mode == BOARD_MODE_EC) {
+        // Full EC mode - treat all keys as EC switches with APC mode
         // EC switch handling
-        if (key_runtime->actuation_mode == 0) {
+        if (runtime_hybrid_config.board_actuation_mode == ACTUATION_MODE_APC) {
             // Normal board-wide APC (mode 0)
             return hybrid_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
-        } else if (key_runtime->actuation_mode == 1) {
+        } else if (runtime_hybrid_config.board_actuation_mode == ACTUATION_MODE_RT) {
             // Rapid Trigger (RT) mode
             return hybrid_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
+        }
+    } else if (runtime_hybrid_config.board_mode == BOARD_MODE_MX) {
+        // Full MX mode - treat all keys as MX switches
+        return hybrid_update_key_mx(current_row, col, sw_value, pressed);
+    } else if (runtime_hybrid_config.board_mode == BOARD_MODE_HYBRID) {
+        // Hybrid mode - treat keys based on their individual switch type
+        if (key_runtime->switch_type == SWITCH_TYPE_EC) {
+            // EC switch handling
+            if (key_runtime->actuation_mode == ACTUATION_MODE_APC) {
+                // Normal board-wide APC (mode 0)
+                return hybrid_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
+            } else if (key_runtime->actuation_mode == ACTUATION_MODE_RT) {
+                // Rapid Trigger (RT) mode
+                return hybrid_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
+            }
+        } else if (key_runtime->switch_type == SWITCH_TYPE_MX) {
+            // MX switch handling
+            return hybrid_update_key_mx(current_row, col, sw_value, pressed);
         }
     }
 
@@ -475,8 +490,8 @@ void bulk_rescale_key_thresholds(runtime_key_state_t *key_runtime, eeprom_key_st
 void update_keys_field(update_mode_t mode, size_t runtime_offset, size_t eeprom_offset, const void *value, size_t field_size) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            // Skip special positions if specified
-            if (!is_special_position(row, col)) {
+            // If in Full EC mode or in Hybrid mode and the key is not a special position
+            if ((runtime_hybrid_config.board_mode == BOARD_MODE_EC) || ((runtime_hybrid_config.board_mode == BOARD_MODE_HYBRID) && !is_special_position(row, col))) {
                 // Update runtime
                 uint8_t *runtime_field = (uint8_t *)&runtime_hybrid_config.runtime_key_state[row][col] + runtime_offset;
                 memcpy(runtime_field, value, field_size);
