@@ -385,10 +385,12 @@ bool ec_update_key_rt(matrix_row_t *current_row, uint8_t col, uint16_t sw_value,
         }
     }
     // Key outside active zone - force release if extremum dropped
-    else if (sw_value < key_runtime->extremum) {
+    else { // Below dead zone
         key_runtime->extremum = sw_value;
-        *current_row &= ~(1 << col);
-        return true;
+        if (pressed) {
+            *current_row &= ~(1 << col);
+            return true;
+        }
     }
 
     return false;
