@@ -315,11 +315,10 @@ uint16_t hybrid_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
     // Select the AMUX channel and column
     select_amux_channel(channel, col);
 
-    // Charge the peak hold capacitor (moved outside atomic block)
-    charge_capacitor(row);
-
     // Atomic block to prevent interruptions during the critical timing section
     ATOMIC_BLOCK_FORCEON {
+        // Charge the peak hold capacitor (moved outside atomic block)
+        charge_capacitor(row);
         // Waiting for the capacitor to charge
         wait_us(CHARGE_TIME);
         // Read the ADC value
