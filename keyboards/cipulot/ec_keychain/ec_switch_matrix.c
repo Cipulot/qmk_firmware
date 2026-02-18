@@ -154,7 +154,7 @@ bool ec_update_key(matrix_row_t *current_row, uint16_t sw_value) {
     }
 
     // Normal board-wide APC
-    if (ec_config.actuation_mode == 0) {
+    if (ec_config.actuation_mode == ACTUATION_MODE_APC) {
         if (current_state && sw_value < ec_config.rescaled_apc_release_threshold) {
             *current_row &= ~(1 << 0);
             uprintf("Key released: %d\n", sw_value);
@@ -167,7 +167,7 @@ bool ec_update_key(matrix_row_t *current_row, uint16_t sw_value) {
         }
     }
     // Rapid Trigger
-    else if (ec_config.actuation_mode == 1) {
+    else if (ec_config.actuation_mode == ACTUATION_MODE_RT) {
         // Is key in active zone?
         if (sw_value > ec_config.rescaled_rt_initial_deadzone_offset) {
             // Is key pressed while in active zone?

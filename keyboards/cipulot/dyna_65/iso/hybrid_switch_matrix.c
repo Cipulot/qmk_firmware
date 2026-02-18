@@ -353,12 +353,12 @@ bool hybrid_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint
     if (key_runtime->switch_type == SWITCH_TYPE_MX) {
         // MX switch handling
         return hybrid_update_key_mx(current_row, col, sw_value, pressed);
-    } else if (key_runtime->switch_type == 0) {
+    } else if (key_runtime->switch_type == SWITCH_TYPE_EC) {
         // EC switch handling
-        if (key_runtime->actuation_mode == 0) {
+        if (key_runtime->actuation_mode == ACTUATION_MODE_APC) {
             // Normal board-wide APC (mode 0)
             return hybrid_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
-        } else if (key_runtime->actuation_mode == 1) {
+        } else if (key_runtime->actuation_mode == ACTUATION_MODE_RT) {
             // Rapid Trigger (RT) mode
             return hybrid_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
         }

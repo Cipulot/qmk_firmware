@@ -330,9 +330,9 @@ bool ec_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint16_t
     }
 
     // Update key state based on actuation mode
-    if (key_runtime->actuation_mode == 0) {
+    if (key_runtime->actuation_mode == ACTUATION_MODE_APC) {
         return ec_update_key_apc(current_row, col, sw_value, key_runtime, pressed);
-    } else if (key_runtime->actuation_mode == 1) {
+    } else if (key_runtime->actuation_mode == ACTUATION_MODE_RT) {
         return ec_update_key_rt(current_row, col, sw_value, key_runtime, pressed);
     }
 
