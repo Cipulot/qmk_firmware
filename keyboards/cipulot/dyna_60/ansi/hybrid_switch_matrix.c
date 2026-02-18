@@ -265,7 +265,7 @@ bool hybrid_matrix_scan(matrix_row_t current_matrix[]) {
                 runtime_key_state_t *key_runtime = &runtime_hybrid_config.runtime_key_state[row][adjusted_col];
 
                 // Track keypresses for ghost key detection (MX mode)
-                if (key_runtime->switch_type == 1 && (sw_value[row][adjusted_col] > 1000)) {
+                if (key_runtime->switch_type == SWITCH_TYPE_MX && (sw_value[row][adjusted_col] > 1000)) {
                     if (mx_keypress_count < 4) {
                         keypresses[mx_keypress_count++] = (KeyCoord){row, adjusted_col};
                     }
@@ -350,7 +350,7 @@ bool hybrid_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint
     }
 
     // Handle switch type
-    if (key_runtime->switch_type == 1) {
+    if (key_runtime->switch_type == SWITCH_TYPE_MX) {
         // MX switch handling
         return hybrid_update_key_mx(current_row, col, sw_value, pressed);
     } else if (key_runtime->switch_type == 0) {

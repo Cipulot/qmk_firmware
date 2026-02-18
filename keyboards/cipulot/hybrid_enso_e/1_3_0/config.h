@@ -21,7 +21,7 @@
 
 #define UNUSED_POSITIONS_LIST {{0, 14}, {0, 15}, {0, 16}, {0, 17}, {0, 18}, {0, 19}, {0, 20}, {0, 21}, {0, 22}, {0, 23}, {0, 24}, {0, 25}, {1, 14}, {1, 15}, {1, 16}, {1, 17}, {1, 18}, {1, 19}, {1, 20}, {1, 21}, {1, 22}, {1, 23}, {1, 24}, {1, 25}, {2, 12}, {2, 14}, {2, 15}, {2, 16}, {2, 17}, {2, 18}, {2, 19}, {2, 20}, {2, 21}, {2, 22}, {2, 23}, {2, 24}, {2, 25}, {3, 0}, {3, 12}, {3, 13}, {3, 17}, {3, 18}, {3, 19}, {3, 20}, {3, 21}, {3, 22}, {3, 23}, {3, 24}, {3, 25}, {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}, {4, 7}, {4, 8}, {4, 9}, {4, 10}, {4, 11}, {4, 12}, {4, 13}, {4, 14}, {4, 15}, {4, 16}}
 
-// Order iportant for special positions handling, don't change it unless you know what you're doing
+// Order important for special positions handling, don't change it unless you know what you're doing
 #define SPECIAL_POSITIONS_LIST {{3, 14}, {4, 17}, {3, 15}, {3, 16}, {4, 18}, {4, 19}, {4, 20}, {4, 21}, {4, 22}, {4, 23}, {4, 24}, {4, 25}}
 
 #define MATRIX_ROW_PINS {B5, B6, B7, A9, A10}
@@ -51,8 +51,8 @@
 #define ACTUATION_MODE_APC 0
 #define ACTUATION_MODE_RT 1
 
-#define DEFAULT_BOARD_MODE BOARD_MODE_MX // 0: Full EC, 1: Full MX, 2: Hybrid
-#define DEFAULT_SWITCH_TYPE SWITCH_TYPE_MX // 0: EC, 1: MX
+#define DEFAULT_BOARD_MODE BOARD_MODE_MX          // 0: Full EC, 1: Full MX, 2: Hybrid
+#define DEFAULT_SWITCH_TYPE SWITCH_TYPE_MX        // 0: EC, 1: MX
 #define DEFAULT_ACTUATION_MODE ACTUATION_MODE_APC // 0: APC, 1: Rapid Trigger
 #define DEFAULT_APC_ACTUATION_LEVEL 550
 #define DEFAULT_APC_RELEASE_LEVEL 500

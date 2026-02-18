@@ -210,7 +210,7 @@ bool hybrid_update_key(matrix_row_t *current_row, uint8_t row, uint8_t col, uint
     }
 
     // Handle switch type
-    if (key_runtime->switch_type == 1) {
+    if (key_runtime->switch_type == SWITCH_TYPE_MX) {
         // MX switch handling
         return hybrid_update_key_mx(current_row, col, sw_value, pressed);
     } else if (key_runtime->switch_type == 0) {
