@@ -295,7 +295,7 @@ uint16_t ec_readkey_raw(uint8_t channel, uint8_t row, uint8_t col) {
 
     // Atomic block to prevent interruptions during the critical timing section
     ATOMIC_BLOCK_FORCEON {
-        // Charge the peak hold capacitor (moved outside atomic block)
+        // Charge the peak hold capacitor
         charge_capacitor(row);
         // Waiting for the capacitor to charge
         wait_us(CHARGE_TIME);
