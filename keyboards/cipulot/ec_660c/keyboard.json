@@ -19,10 +19,6 @@
         "mousekey": true,
         "nkro": true
     },
-    "indicators": {
-        "caps_lock": "B14",
-        "scroll_lock": "B15"
-    },
     "processor": "STM32F401",
     "qmk": {
         "locking": {
